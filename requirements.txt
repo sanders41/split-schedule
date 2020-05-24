@@ -1,0 +1,6 @@
+mypy==0.770
+pandas==1.0.3
+pytest==5.4.2
+pytest-cov==2.9.0
+xlrd==1.2.0
+XlsxWriter==1.2.8
