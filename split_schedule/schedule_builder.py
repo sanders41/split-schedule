@@ -44,13 +44,11 @@ class ScheduleBuilder:
                 student_classes_grouped,
                 total_classes
             )
-            
+
             if fill_classes_return:
                 fill_classes = fill_classes_return
 
                 fill_class_df = self._expand_fill_classes(fill_classes)
-
-                logging
 
                 self._save_schedule_to_file(fill_class_df, save_path)
 
