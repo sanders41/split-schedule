@@ -17,7 +17,7 @@ from typing import Dict, List, Optional, Set, Tuple
 
 class ScheduleBuilder:
     def __init__(self, schedule_file_path: str) -> None:
-        self.schedule_df = pd.read_excel(schedule_file_path)
+        self.schedule_df = self._load_file(schedule_file_path)
 
     def build_schedule(self, reduce_by: float, save_path: str, smallest_allowed: int=1) -> None:
         student_classes_grouped = self._group_blocks()
@@ -44,12 +44,15 @@ class ScheduleBuilder:
                 student_classes_grouped,
                 total_classes
             )
-
+            
             if fill_classes_return:
                 fill_classes = fill_classes_return
 
-        fill_class_df = self._expand_fill_classes(fill_classes)
-        self._save_schedule_to_file(fill_class_df, save_path)
+                fill_class_df = self._expand_fill_classes(fill_classes)
+
+                logging
+
+                self._save_schedule_to_file(fill_class_df, save_path)
 
     def _create_fill_classes_days(self, total_classes: int) -> List[List]:
         days: List[List] = []
@@ -106,13 +109,6 @@ class ScheduleBuilder:
                                             student['class_name'],
                                         ) not in added
                                     ):
-                                        added.add(
-                                            (
-                                                student['student'],
-                                                student['block'],
-                                                student['class_name'],
-                                            )
-                                        )
                                         for choice in fill_classes:
                                             if student_block['block'] == choice['block']:
                                                 if (
@@ -122,6 +118,13 @@ class ScheduleBuilder:
                                                     if student['student'] in student_day_tracker:
                                                         if len(choice['classes'][student_day_tracker[student['student']]]) < choice['max_students']:
                                                             choice['classes'][student_day_tracker[student['student']]].add(student['student'])
+                                                            added.add(
+                                                                (
+                                                                    student['student'],
+                                                                    student['block'],
+                                                                    student['class_name'],
+                                                                )
+                                                            )
                                                             student_day = True
                                                             break
                                                         else:
@@ -133,6 +136,13 @@ class ScheduleBuilder:
                                                             if len(choice['classes'][j]) < choice['max_students']:
                                                                 choice['classes'][j].add(student['student'])
                                                                 student_day_tracker[student['student']] = j
+                                                                added.add(
+                                                                (
+                                                                    student['student'],
+                                                                    student['block'],
+                                                                    student['class_name'],
+                                                                )
+                                                            )
                                                                 student_day = True
                                                                 break
                                                             else:
@@ -165,7 +175,6 @@ class ScheduleBuilder:
                                     for people in m:
                                         for person in people:
                                             if person not in students_added:
-                                                students_added.add(person)
                                                 for i, student in enumerate(
                                                     student_class['students']
                                                 ):
@@ -174,6 +183,7 @@ class ScheduleBuilder:
                                                         for day in days:
                                                             if len(day) < c['max_students']:
                                                                 day.append(student)
+                                                                students_added.add(person)
                                                                 added = True
                                                                 break
                                                         if not added:
@@ -184,11 +194,11 @@ class ScheduleBuilder:
                             shuffle(student_class['students'])
                             for i, student in enumerate(student_class['students']):
                                 if student['student'] not in students_added:
-                                    students_added.add(student['student'])
                                     for day in days:
                                         added = False
                                         if len(day) < c['max_students']:
                                             day.append(student)
+                                            students_added.add(student['student'])
                                             added = True
                                             break
                                     if not added:
@@ -307,6 +317,11 @@ class ScheduleBuilder:
 
         return classes
 
+    def _load_file(self, file_path: str) -> pd.DataFrame:
+        df = pd.read_excel(file_path)
+
+        return df.dropna()
+
     def _reduce_class(
         self,
         class_size: List[ScheduleTotalStudents],
@@ -330,3 +345,24 @@ class ScheduleBuilder:
     def _save_schedule_to_file(self, df: pd.DataFrame, save_path: str) -> None:
         df = df.sort_values(by=['day_number', 'block', 'class'])
         df.to_excel(save_path, index=False, engine='xlsxwriter')
+
+    def _validate_classes(self, reduced_df: pd.DataFrame) -> Optional[pd.DataFrame]:
+        df_main_grouped = self.schedule_df.groupby('student').size().to_frame('original')
+        df_reduced_grouped = reduced_df.groupby('student').size().to_frame('scheduled')
+        df_merge = df_main_grouped.merge(df_reduced_grouped, on='student')
+        
+        if df_merge.empty:
+            return None
+
+        return df_merge
+
+    def _validate_students(self, reduced_df: pd.DataFrame) -> Optional[List[str]]:
+        missing = []
+        for student in self.schedule_df['student'].unique().tolist():
+            if student not in reduced_df['student'].unique().tolist():
+                missing.append(student)
+
+        if len(missing) == 0:
+            return None
+
+        return missing
