@@ -124,3 +124,128 @@ def test_save_schedule_check_columns(tmp_path):
     columns = df_saved.columns.values.tolist()
 
     assert columns == ['day_number', 'block', 'class']
+
+
+def test_validate_classes_pass(tmp_path):
+    test_file = str(tmp_path.joinpath('test.xlsx'))
+    data_1 = {
+        'block': [1, 2, 3, 1, 2],
+        'class': ['test class 1', 'test class 2', 'test class 3', 'test class 1', 'test class 2'],
+        'student': ['test 1', 'test 1', 'test 1', 'test 2', 'test 2'],
+    }
+
+    df_1 = pd.DataFrame(data_1)
+    df_1.to_excel(test_file, index=False, engine='xlsxwriter')
+
+    data_2 = data_1 = {
+        'block': [1, 3, 2, 1, 2],
+        'class': [
+            'test class 1',
+            'test class 3',
+            'test class 2',
+            'test class 1',
+            'test class 2',
+        ],
+        'student': ['test 1', 'test 1', 'test 1', 'test 2', 'test 2'],
+    }
+
+    df_2 = pd.DataFrame(data_2)
+
+    schedule_builder = ScheduleBuilder(test_file)
+    invalid_df = schedule_builder._validate_classes(df_2)
+
+    assert not invalid_df
+
+
+def test_validate_classes_fail(tmp_path):
+    test_file = str(tmp_path.joinpath('test.xlsx'))
+    data_1 = {
+        'block': [1, 2, 3, 1, 2],
+        'class': ['test class 1', 'test class 2', 'test class 3', 'test class 1', 'test class 2'],
+        'student': ['test 1', 'test 1', 'test 1', 'test 2', 'test 2'],
+    }
+
+    df_1 = pd.DataFrame(data_1)
+    df_1.to_excel(test_file, index=False, engine='xlsxwriter')
+
+    data_2 = {
+        'block': [1, 2, 1, 2],
+        'class': ['test class 1', 'test class 2', 'test class 1', 'test class 2'],
+        'student': ['test 1', 'test 1', 'test 2', 'test 2'],
+    }
+
+    df_2 = pd.DataFrame(data_2)
+
+    expected_df = pd.DataFrame(
+        {
+            'student': ['test 1'],
+            'original': 3,
+            'scheduled': 2,
+        }
+    ).set_index('student')
+
+    schedule_builder = ScheduleBuilder(test_file)
+    invalid_df = schedule_builder._validate_classes(df_2)
+
+    assert expected_df.equals(invalid_df)
+
+
+def test_validate_students_pass(tmp_path):
+    test_file = str(tmp_path.joinpath('test.xlsx'))
+    data_1 = {
+        'block': [1, 2, 3, 1, 2],
+        'class': ['test class 1', 'test class 2', 'test class 3', 'test class 1', 'test class 2'],
+        'student': ['test 1', 'test 1', 'test 1', 'test 2', 'test 2'],
+    }
+
+    df_1 = pd.DataFrame(data_1)
+    df_1.to_excel(test_file, index=False, engine='xlsxwriter')
+
+    data_2 = data_1 = {
+        'block': [1, 3, 2, 1, 4],
+        'class': [
+            'test class 1',
+            'test class 3',
+            'test class 2',
+            'test class 1',
+            'test class 4',
+        ],
+        'student': ['test 1', 'test 1', 'test 1', 'test 2', 'test 1'],
+    }
+
+    df_2 = pd.DataFrame(data_2)
+
+    schedule_builder = ScheduleBuilder(test_file)
+    invalid = schedule_builder._validate_students(df_2)
+
+    assert not invalid
+
+
+def test_validate_students_fail(tmp_path):
+    test_file = str(tmp_path.joinpath('test.xlsx'))
+    data_1 = {
+        'block': [1, 2, 3, 1, 2],
+        'class': ['test class 1', 'test class 2', 'test class 3', 'test class 1', 'test class 2'],
+        'student': ['test 1', 'test 1', 'test 1', 'test 2', 'test 2'],
+    }
+
+    df_1 = pd.DataFrame(data_1)
+    df_1.to_excel(test_file, index=False, engine='xlsxwriter')
+
+    data_2 = data_1 = {
+        'block': [1, 3, 2],
+        'class': [
+            'test class 1',
+            'test class 3',
+            'test class 2',
+        ],
+        'student': ['test 1', 'test 1', 'test 1'],
+    }
+
+    df_2 = pd.DataFrame(data_2)
+
+    schedule_builder = ScheduleBuilder(test_file)
+    invalid = schedule_builder._validate_students(df_2)
+
+    assert len(invalid) == 1
+    assert 'test 2' in invalid
