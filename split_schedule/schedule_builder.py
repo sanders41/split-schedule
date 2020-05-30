@@ -24,7 +24,11 @@ logger = logging.getLogger(__name__)
 
 class ScheduleBuilder:
     def __init__(self, schedule_file_path: str) -> None:
+<<<<<<< HEAD
         self.schedule_df = self._load_data(schedule_file_path)
+=======
+        self.schedule_df = self._load_file(schedule_file_path)
+>>>>>>> 76939b05b9567fdd38d058285510bff7c9b359b8
 
     def build_schedule(self, reduce_by: float, save_path: str, smallest_allowed: int=1) -> None:
         logger.info('Grouping student blocks')
@@ -85,10 +89,16 @@ class ScheduleBuilder:
                 fill_class_df = self._expand_fill_classes(fill_classes)
                 logger.info('Formatting classes complete')
 
+<<<<<<< HEAD
                 logger.info(f'Saving schedule to {save_path}')
                 self._save_schedule_to_file(fill_class_df, save_path)
                 logger.info('Saving schedule complete')
             
+=======
+                fill_class_df = self._expand_fill_classes(fill_classes)
+
+                self._save_schedule_to_file(fill_class_df, save_path)
+>>>>>>> 76939b05b9567fdd38d058285510bff7c9b359b8
 
     def _create_fill_classes_days(self, total_classes: int) -> List[List]:
         days: List[List] = []
@@ -147,13 +157,6 @@ class ScheduleBuilder:
                                             student['class_name'],
                                         ) not in added
                                     ):
-                                        added.add(
-                                            (
-                                                student['student'],
-                                                student['block'],
-                                                student['class_name'],
-                                            )
-                                        )
                                         for choice in fill_classes:
                                             if student_block['block'] == choice['block']:
                                                 if (
@@ -173,6 +176,13 @@ class ScheduleBuilder:
                                                                 )
                                                             )
                                                             choice['classes'][student_day_tracker[student['student']]].add(student['student'])
+                                                            added.add(
+                                                                (
+                                                                    student['student'],
+                                                                    student['block'],
+                                                                    student['class_name'],
+                                                                )
+                                                            )
                                                             student_day = True
                                                             break
                                                         else:
@@ -197,6 +207,13 @@ class ScheduleBuilder:
                                                                 )
                                                                 choice['classes'][j].add(student['student'])
                                                                 student_day_tracker[student['student']] = j
+                                                                added.add(
+                                                                (
+                                                                    student['student'],
+                                                                    student['block'],
+                                                                    student['class_name'],
+                                                                )
+                                                            )
                                                                 student_day = True
                                                                 break
                                                             else:
@@ -231,7 +248,10 @@ class ScheduleBuilder:
                                     for people in m:
                                         for person in people:
                                             if person not in students_added:
+<<<<<<< HEAD
                                                 shuffle(student_class['students'])
+=======
+>>>>>>> 76939b05b9567fdd38d058285510bff7c9b359b8
                                                 for i, student in enumerate(
                                                     student_class['students']
                                                 ):
@@ -377,10 +397,17 @@ class ScheduleBuilder:
 
         return classes
 
+<<<<<<< HEAD
     def _load_data(self, file_path: str) -> pd.DataFrame:
         df = pd.read_excel(file_path)
         df = df.dropna()
         return df
+=======
+    def _load_file(self, file_path: str) -> pd.DataFrame:
+        df = pd.read_excel(file_path)
+
+        return df.dropna()
+>>>>>>> 76939b05b9567fdd38d058285510bff7c9b359b8
 
     def _reduce_class(
         self,
@@ -405,3 +432,24 @@ class ScheduleBuilder:
     def _save_schedule_to_file(self, df: pd.DataFrame, save_path: str) -> None:
         df = df.sort_values(by=['day_number', 'block', 'class'])
         df.to_excel(save_path, index=False, engine='xlsxwriter')
+
+    def _validate_classes(self, reduced_df: pd.DataFrame) -> Optional[pd.DataFrame]:
+        df_main_grouped = self.schedule_df.groupby('student').size().to_frame('original')
+        df_reduced_grouped = reduced_df.groupby('student').size().to_frame('scheduled')
+        df_merge = df_main_grouped.merge(df_reduced_grouped, on='student')
+        
+        if df_merge.empty:
+            return None
+
+        return df_merge
+
+    def _validate_students(self, reduced_df: pd.DataFrame) -> Optional[List[str]]:
+        missing = []
+        for student in self.schedule_df['student'].unique().tolist():
+            if student not in reduced_df['student'].unique().tolist():
+                missing.append(student)
+
+        if len(missing) == 0:
+            return None
+
+        return missing
