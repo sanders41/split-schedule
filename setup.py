@@ -14,9 +14,9 @@ setup(
     long_description_content_type='text/markdown',
     packages=['split_schedule'],
     install_requires=[
-        'pandas>=1.0.3',
+        'pandas>=1.0.4',
         'xlrd==1.2.0',
-        'XlsxWriter==1.2.8',
+        'XlsxWriter==1.2.9',
     ],
     classifiers=[
         'Programming Language :: Python :: 3.8',
