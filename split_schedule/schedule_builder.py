@@ -21,14 +21,13 @@ logging.root.setLevel(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
+class SchedulingError(Exception):
+    pass
+
 
 class ScheduleBuilder:
     def __init__(self, schedule_file_path: str) -> None:
-<<<<<<< HEAD
         self.schedule_df = self._load_data(schedule_file_path)
-=======
-        self.schedule_df = self._load_file(schedule_file_path)
->>>>>>> 76939b05b9567fdd38d058285510bff7c9b359b8
 
     def build_schedule(self, reduce_by: float, save_path: str, smallest_allowed: int=1) -> None:
         logger.info('Grouping student blocks')
@@ -56,9 +55,13 @@ class ScheduleBuilder:
         logger.info('Getting total classes needed complete')
 
         student_day = False
+        fill_class_return: Optional[List[ScheduleTotalStudents]] = None
         
         i = 1
         while not student_day:
+            if i > 20:
+                raise SchedulingError('Unable to find a viable schedule')
+
             logger.info(f'Schedule build try number {i}')
             i += 1
 
@@ -70,6 +73,9 @@ class ScheduleBuilder:
                 total_classes,
                 student_classes_grouped,
             )
+            if group_blocks == False:
+                student_day = False
+                continue
             logging.info('Filling blocks complete')
 
             logger.info('Filling classes')
@@ -81,24 +87,43 @@ class ScheduleBuilder:
             )
             logger.info('Filling classes complete')
 
-            if student_day:
-                if fill_classes_return:
-                    fill_classes = fill_classes_return
+        if fill_classes_return:
+            fill_classes = fill_classes_return
 
-                logger.info('Formatting classes')
-                fill_class_df = self._expand_fill_classes(fill_classes)
-                logger.info('Formatting classes complete')
+            logger.info('Formatting classes')
+            fill_class_df = self._expand_fill_classes(fill_classes)
+            logger.info('Formatting classes complete')
 
-<<<<<<< HEAD
-                logger.info(f'Saving schedule to {save_path}')
-                self._save_schedule_to_file(fill_class_df, save_path)
-                logger.info('Saving schedule complete')
+            logger.info('Validating generated schedule')
+            validated_classes_numbers = self._validate_classes(fill_class_df)
+            validated_same_days = self._validate_same_day(fill_class_df)
+            validated_students = self._validate_students(fill_class_df)
+
+            if validated_classes_numbers is not None:
+                logger.error('Student missing from the generated schedule')
+                print(validated_classes_numbers)
+
+            if validated_same_days is not None:
+                logger.error('Student not on the same day')
+                print(validated_same_days)
             
-=======
-                fill_class_df = self._expand_fill_classes(fill_classes)
+            if validated_students:
+                logger.error('Student original number of classes and generated number of classes do not match')
+                print(validated_students)
 
-                self._save_schedule_to_file(fill_class_df, save_path)
->>>>>>> 76939b05b9567fdd38d058285510bff7c9b359b8
+            if (
+                validated_classes_numbers is not None
+                or validated_same_days is not None
+                or validated_students
+            ):
+                raise SchedulingError('Error generating schedule')
+
+            logger.info('Validation complete')
+
+            logger.info(f'Saving schedule to {save_path}')
+            self._save_schedule_to_file(fill_class_df, save_path)
+            logger.info('Saving schedule complete')
+            
 
     def _create_fill_classes_days(self, total_classes: int) -> List[List]:
         days: List[List] = []
@@ -138,17 +163,12 @@ class ScheduleBuilder:
         student_day = False
         student_day_tracker: Dict[str, int] = {}
         for x, block in enumerate(group_blocks):
-            if x == len(group_blocks) - 1:
-                student_day = True
-                break
             for i, b in enumerate(block):
                 fill_day = 0
                 for sb in b:
                     for student_block in student_classes_grouped:
                         for student_class in student_block['classes']:
                             for student in student_class['students']:
-                                #if student['student'] == 'Aguilar-Gutierrez, Brandon Emmanuel':
-                                #    print(student)
                                 if student['student'] == sb['student']:
                                     if (
                                         (
@@ -164,17 +184,7 @@ class ScheduleBuilder:
                                                     and student['class_name'] == choice['class_name']
                                                 ):
                                                     if student['student'] in student_day_tracker:
-                                                        #if student['student'] == 'Aguilar-Gutierrez, Brandon Emmanuel':
-                                                        #    print(student)
                                                         if len(choice['classes'][student_day_tracker[student['student']]]) < choice['max_students']:
-                                                            #print(student)
-                                                            added.add(
-                                                                (
-                                                                    student['student'],
-                                                                    student['block'],
-                                                                    student['class_name'],
-                                                                )
-                                                            )
                                                             choice['classes'][student_day_tracker[student['student']]].add(student['student'])
                                                             added.add(
                                                                 (
@@ -186,18 +196,27 @@ class ScheduleBuilder:
                                                             student_day = True
                                                             break
                                                         else:
-                                                            #if i + 1 > len(choice['classes']):
-                                                            #    return False, None
-                                                            #    student_day = False
-                                                            #    break
-                                                            #print(student_day_tracker)
-                                                            print(student['student'])
-                                                            return False, None
+                                                            for j in range(total_classes):
+                                                                if len(choice['classes'][j]) < choice['max_students']:
+                                                                    choice['classes'][j].add(student['student'])
+                                                                    student_day_tracker[student['student']] = j
+                                                                    added.add(
+                                                                        (
+                                                                            student['student'],
+                                                                            student['block'],
+                                                                            student['class_name'],
+                                                                        )
+                                                                    )
+                                                                    student_day = True
+                                                                    break
+                                                            if i + 1 > len(choice['classes']):
+                                                                return False, None
+                                                            break
                                                     else:
                                                         for j in range(total_classes):
                                                             if len(choice['classes'][j]) < choice['max_students']:
-                                                                #if student['student'] == 'Aguilar-Gutierrez, Brandon Emmanuel':
-                                                                #    print(student)
+                                                                choice['classes'][j].add(student['student'])
+                                                                student_day_tracker[student['student']] = j
                                                                 added.add(
                                                                     (
                                                                         student['student'],
@@ -205,27 +224,16 @@ class ScheduleBuilder:
                                                                         student['class_name'],
                                                                     )
                                                                 )
-                                                                choice['classes'][j].add(student['student'])
-                                                                student_day_tracker[student['student']] = j
-                                                                added.add(
-                                                                (
-                                                                    student['student'],
-                                                                    student['block'],
-                                                                    student['class_name'],
-                                                                )
-                                                            )
                                                                 student_day = True
                                                                 break
                                                             else:
                                                                 if i + 1 > len(choice['classes']):
                                                                     return False, None
-                                                                    student_day = False
-                                                                    break
+                                                                    
         if student_day:
             return student_day, fill_classes
         
         return False, None
-        #return student_day, None
 
     def _fill_grouped_blocks(
         self,
@@ -248,10 +256,6 @@ class ScheduleBuilder:
                                     for people in m:
                                         for person in people:
                                             if person not in students_added:
-<<<<<<< HEAD
-                                                shuffle(student_class['students'])
-=======
->>>>>>> 76939b05b9567fdd38d058285510bff7c9b359b8
                                                 for i, student in enumerate(
                                                     student_class['students']
                                                 ):
@@ -265,6 +269,7 @@ class ScheduleBuilder:
                                                                 break
                                                         if not added:
                                                             days.append([student])
+                                                            students_added.add(student['student'])
                                                     if i == len(student) - 1:
                                                         group_blocks.append(days)
 
@@ -280,6 +285,7 @@ class ScheduleBuilder:
                                             break
                                     if not added:
                                         days.append([student])
+                                        students_added.add(student['student'])
 
                                 if i == c['total_students'] - 1:
                                      group_blocks.append(days)
@@ -308,7 +314,7 @@ class ScheduleBuilder:
                     all_combinations += combinations_list
 
         all_combinations.sort(reverse=True, key=len)
-        
+
         for comb in all_combinations:
             exclude = []
             for match in matches:
@@ -325,11 +331,9 @@ class ScheduleBuilder:
                 match_list = match[1][['student']].values.tolist() # type: ignore
                 check = [x.pop() for x in match_list if len(match_list) > 1]
                 if len(check) > 0:
-                    #print(matches_key)
                     matches[matches_loc][matches_key].append(check)
-        #print(matches)
 
-        return matches 
+        return matches
 
     def _get_class_size(self) -> List[ScheduleTotalStudents]:
         class_size = (
@@ -397,17 +401,11 @@ class ScheduleBuilder:
 
         return classes
 
-<<<<<<< HEAD
     def _load_data(self, file_path: str) -> pd.DataFrame:
         df = pd.read_excel(file_path)
         df = df.dropna()
+        #df = df[(df['block'] != 4) & (df['block'] != 3) & (df['block'] != 2)]
         return df
-=======
-    def _load_file(self, file_path: str) -> pd.DataFrame:
-        df = pd.read_excel(file_path)
-
-        return df.dropna()
->>>>>>> 76939b05b9567fdd38d058285510bff7c9b359b8
 
     def _reduce_class(
         self,
@@ -437,11 +435,28 @@ class ScheduleBuilder:
         df_main_grouped = self.schedule_df.groupby('student').size().to_frame('original')
         df_reduced_grouped = reduced_df.groupby('student').size().to_frame('scheduled')
         df_merge = df_main_grouped.merge(df_reduced_grouped, on='student')
+
+        df_merge = df_merge[df_merge['original'] != df_merge['scheduled']]
         
         if df_merge.empty:
             return None
 
         return df_merge
+
+    def _validate_same_day(self, reduced_df: pd.DataFrame) -> Optional[pd.DataFrame]:
+        reduced_df = (
+            reduced_df[['student', 'day_number']]
+            .drop_duplicates().groupby(['student', 'day_number'])
+            .size()
+            .to_frame('count')
+            .reset_index()
+        )
+        reduced_df = reduced_df[reduced_df['count'] > 1]
+
+        if reduced_df.empty:
+            return None
+
+        return reduced_df
 
     def _validate_students(self, reduced_df: pd.DataFrame) -> Optional[List[str]]:
         missing = []
