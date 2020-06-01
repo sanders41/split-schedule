@@ -6,10 +6,6 @@ from pathlib import Path
 from split_schedule.set_schedule import main
 
 
-ASSETS_PATH= Path().absolute().joinpath('tests/assets/')
-TEST_FILE_PATH = ASSETS_PATH.joinpath('classes.xlsx')
-
-
 @pytest.mark.parametrize('file_path', ['-f', '--file_path'])
 @pytest.mark.parametrize('output_file_path', ['-o', '--output_file_path'])
 @pytest.mark.parametrize('reduce_by', ['-r', '--reduce_by'])
@@ -24,13 +20,14 @@ def test_set_schedule(
     reduce_by,
     smallest_allowed,
     reduce_by_amount,
-    smallest_allowed_amount
+    smallest_allowed_amount,
+    test_schedule
 ):
     EXPORT_PATH = tmp_path.joinpath('schedule.xlsx')
     args=[
         'pytest',
         file_path,
-        str(TEST_FILE_PATH),
+        str(test_schedule),
         output_file_path,
         str(EXPORT_PATH),
         reduce_by,
@@ -41,7 +38,7 @@ def test_set_schedule(
         args.append(smallest_allowed)
         args.append(smallest_allowed_amount)
 
-    expected_df = pd.read_excel(str(TEST_FILE_PATH))
+    expected_df = pd.read_excel(str(test_schedule))
     expected_student_classes = expected_df.groupby('student').size().to_dict()
 
     expected_columns = [

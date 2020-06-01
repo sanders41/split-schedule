@@ -7,13 +7,9 @@ from operator import itemgetter
 from pathlib import Path
 
 
-ASSETS_PATH= Path().absolute().joinpath('tests/assets/')
-TEST_FILE_PATH = ASSETS_PATH.joinpath('classes.xlsx')
-
-
 @pytest.fixture(scope='session')
-def class_size_check():
-    df = pd.read_excel(str(TEST_FILE_PATH))
+def class_size_check(test_schedule):
+    df = pd.read_excel(str(test_schedule))
     class_size = df.groupby(['block', 'class',]).size().to_frame().reset_index()
     class_size = [
         {'block': x[0], 'class_name': x[1], 'total_students': x[2]} for x in class_size.to_numpy()
@@ -23,8 +19,8 @@ def class_size_check():
 
 
 @pytest.fixture(scope='session')
-def group_blocks_check():
-    df = pd.read_excel(str(TEST_FILE_PATH))
+def group_blocks_check(test_schedule):
+    df = pd.read_excel(str(test_schedule))
     student_classes = [
         {'block': x[1], 'class_name': x[2], 'student': x[0],}
             for x in df[['student', 'block', 'class']]
@@ -47,8 +43,8 @@ def group_blocks_check():
 
 
 @pytest.fixture(scope='session')
-def student_matches_check():
-    df = pd.read_excel(str(TEST_FILE_PATH))
+def student_matches_check(test_schedule):
+    df = pd.read_excel(str(test_schedule))
     blocks = df['block'].sort_values().unique()
     total_blocks = df['block'].max()
     match_df = df.pivot(
@@ -93,8 +89,8 @@ def student_matches_check():
 
 
 @pytest.fixture(scope='session')
-def student_classes_check():
-    df = pd.read_excel(str(TEST_FILE_PATH))
+def student_classes_check(test_schedule):
+    df = pd.read_excel(str(test_schedule))
     student_classes = [
         {'block': x[1], 'class_name': x[2], 'student': x[0],}
             for x in df[['student', 'block', 'class']]
@@ -103,3 +99,153 @@ def student_classes_check():
     ]
 
     return student_classes
+
+
+@pytest.fixture(scope='session')
+def test_schedule(tmp_path_factory):
+    data = {
+        'block': [
+            1,
+            1,
+            2,
+            3,
+            2,
+            2,
+            2,
+            2,
+            1,
+            1,
+            1,
+            1,
+            1,
+            2,
+            3,
+            2,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+        ],
+        'class': [
+            'test class 1',
+            'test class 1',
+            'test class 2',
+            'test class 2',
+            'test class 3',
+            'test class 3',
+            'test class 3',
+            'test class 3',
+            'test class 4',
+            'test class 4',
+            'test class 5',
+            'test class 5',
+            'test class 5',
+            'test class 6',
+            'test class 7',
+            'test class 8',
+            'test class 7',
+            'test class 7',
+            'test class 7',
+            'test class 7',
+            'test class 7',
+            'test class 7',
+            'test class 7',
+            'test class 7',
+            'test class 7',
+            'test class 7',
+            'test class 7',
+            'test class 7',
+            'test class 7',
+            'test class 7',
+            'test class 7',
+            'test class 7',
+            'test class 7',
+            'test class 7',
+            'test class 7',
+            'test class 7',
+            'test class 7',
+            'test class 7',
+            'test class 7',
+            'test class 7',
+            'test class 7',
+            'test class 7',
+            'test class 9',
+            'test class 9',
+        ],
+        'student': [
+            'Al Pacino',
+            'Anne Hathaway',
+            'Arnold Schwarzenegger',
+            'Diane Keaton',
+            'Al Pacino',
+            'Anne Hathaway',
+            'Annette Bening',
+            'Claudia Cardinale',
+            'Antonio Banderas',
+            'Diane Keaton',
+            'Test 1',
+            'Arnold Schwarzenegger',
+            'Claudette Colbert',
+            'Diane Keaton',
+            'Claudia Cardinale',
+            'Antonio Banderas',
+            'Test 1',
+            'Test 2',
+            'Test 3',
+            'Test 4',
+            'Test 5',
+            'Test 6',
+            'Test 7',
+            'Test 8',
+            'Test 9',
+            'Test 10',
+            'Test 11',
+            'Test 12',
+            'Test 13',
+            'Test 14',
+            'Test 15',
+            'Test 16',
+            'Test 17',
+            'Test 18',
+            'Test 19',
+            'Test 20',
+            'Test 21',
+            'Test 22',
+            'Test 23',
+            'Test 24',
+            'Test 25',
+            'Test 26',
+            'Al Pacino',
+            'Anne Hathaway',
+        ],
+    }
+
+    save_dir = tmp_path_factory.mktemp('schedule').joinpath('original_schedule.xlsx')
+    df = pd.DataFrame(data)
+    df.to_excel(save_dir, index=False, engine='xlsxwriter')
+    return save_dir
+    

@@ -73,9 +73,6 @@ class ScheduleBuilder:
                 total_classes,
                 student_classes_grouped,
             )
-            if group_blocks == False:
-                student_day = False
-                continue
             logging.info('Filling blocks complete')
 
             logger.info('Filling classes')
@@ -196,19 +193,6 @@ class ScheduleBuilder:
                                                             student_day = True
                                                             break
                                                         else:
-                                                            for j in range(total_classes):
-                                                                if len(choice['classes'][j]) < choice['max_students']:
-                                                                    choice['classes'][j].add(student['student'])
-                                                                    student_day_tracker[student['student']] = j
-                                                                    added.add(
-                                                                        (
-                                                                            student['student'],
-                                                                            student['block'],
-                                                                            student['class_name'],
-                                                                        )
-                                                                    )
-                                                                    student_day = True
-                                                                    break
                                                             if i + 1 > len(choice['classes']):
                                                                 return False, None
                                                             break
@@ -404,7 +388,6 @@ class ScheduleBuilder:
     def _load_data(self, file_path: str) -> pd.DataFrame:
         df = pd.read_excel(file_path)
         df = df.dropna()
-        #df = df[(df['block'] != 4) & (df['block'] != 3) & (df['block'] != 2)]
         return df
 
     def _reduce_class(
@@ -444,13 +427,8 @@ class ScheduleBuilder:
         return df_merge
 
     def _validate_same_day(self, reduced_df: pd.DataFrame) -> Optional[pd.DataFrame]:
-        reduced_df = (
-            reduced_df[['student', 'day_number']]
-            .drop_duplicates().groupby(['student', 'day_number'])
-            .size()
-            .to_frame('count')
-            .reset_index()
-        )
+        reduced_df = reduced_df[['student', 'day_number']].drop_duplicates()
+        reduced_df = reduced_df.groupby('student').size().to_frame('count').reset_index()
         reduced_df = reduced_df[reduced_df['count'] > 1]
 
         if reduced_df.empty:
