@@ -4,20 +4,174 @@ import pytest
 from collections import Counter
 from math import ceil, floor
 from pathlib import Path
-from split_schedule.schedule_builder import ScheduleBuilder
+from split_schedule.schedule_builder import ScheduleBuilder, SchedulingError
 from tests.helpers import init_classes_check, reduce_classes_check, total_classes_check
 
 
-def test_create_fill_classes_days(test_schedule):
-    total_classes = 1
-    schedule_builder = ScheduleBuilder(str(test_schedule))
-    fill_classes_days = schedule_builder._create_fill_classes_days(total_classes)
+@pytest.mark.parametrize('max_tries', [1, 2])
+def test_build_schedule_validated_classes_number(monkeypatch, tmp_path, caplog, max_tries):
+    test_file = str(tmp_path.joinpath('data1.xlsx'))
+    data_1 = {
+        'block': [1],
+        'class': ['test class 1'],
+        'student': ['test 1'],
+    }
+
+    df_1 = pd.DataFrame(data_1)
+    df_1.to_excel(test_file, index=False, engine='xlsxwriter')
+
+    data_2 = {
+        'block': [1, 2, 1, 2],
+        'class': ['test class 1', 'test class 2', 'test class 1', 'test class 2'],
+        'student': ['test 1', 'test 1', 'test 2', 'test 2'],
+    }
+
+    def mock_return_validated_classes(*args, **kwargs):
+        return pd.DataFrame(data_2)
+
+    schedule_builder = ScheduleBuilder(test_file)
+    monkeypatch.setattr(ScheduleBuilder, '_validate_classes', mock_return_validated_classes)
+    
+    with pytest.raises(SchedulingError) as execinfo:
+        schedule_builder.build_schedule(0.2, str(tmp_path), max_tries=max_tries)
+
+    assert 'Student missing' in caplog.text
+    assert 'Error generating schedule' in str(execinfo.value)
 
 
-@pytest.mark.parametrize('reduce_by', [0.1, 0.2, 0.5])
-@pytest.mark.parametrize('smallest_allowed', [1, 5, 10])
-def test_fill_grouped_blocks(reduce_by, smallest_allowed):
-    pass
+@pytest.mark.parametrize('max_tries', [1, 2])
+def test_build_schedule_validated_same_day(monkeypatch, tmp_path, caplog, max_tries):
+    test_file = str(tmp_path.joinpath('data1.xlsx'))
+    data_1 = {
+        'block': [1],
+        'class': ['test class 1'],
+        'student': ['test 1'],
+    }
+
+    df_1 = pd.DataFrame(data_1)
+    df_1.to_excel(test_file, index=False, engine='xlsxwriter')
+
+    data_2 = {
+        'block': [1, 1, 2,],
+        'class': ['test class 1', 'test class 1', 'test class 3',],
+        'total_students': [2, 2, 1,],
+        'max_students': [2, 2, 1,],
+        'num_classes': [1, 1, 1,],
+        'day_number': [1, 1, 2,],
+        'student': ['test 1', 'test 2', 'test 1',],
+    }
+    def mock_return_validated_days(*args, **kwargs):
+        return pd.DataFrame(data_2)
+    
+    schedule_builder = ScheduleBuilder(test_file)
+    monkeypatch.setattr(ScheduleBuilder, '_validate_same_day', mock_return_validated_days)
+    
+    with pytest.raises(SchedulingError) as execinfo:
+        schedule_builder.build_schedule(0.2, str(tmp_path), max_tries=max_tries)
+
+    assert 'Student not on the same day' in caplog.text
+    assert 'Error generating schedule' in str(execinfo.value)
+
+
+@pytest.mark.parametrize('max_tries', [1, 2])
+def test_build_schedule_validated_students(monkeypatch, tmp_path, caplog, max_tries):
+    test_file = str(tmp_path.joinpath('data1.xlsx'))
+    data_1 = {
+        'block': [1],
+        'class': ['test class 1'],
+        'student': ['test 1'],
+    }
+
+    df_1 = pd.DataFrame(data_1)
+    df_1.to_excel(test_file, index=False, engine='xlsxwriter')
+
+    def mock_return_validated_students(*args, **kwargs):
+        return ['test 1']
+    
+    schedule_builder = ScheduleBuilder(test_file)
+    monkeypatch.setattr(ScheduleBuilder, '_validate_students', mock_return_validated_students)
+    
+    with pytest.raises(SchedulingError) as execinfo:
+        schedule_builder.build_schedule(0.2, str(tmp_path), max_tries=max_tries)
+
+    assert 'Student original number' in caplog.text
+    assert 'Error generating schedule' in str(execinfo.value)
+
+
+def test_build_schedule_restart(monkeypatch, tmp_path, caplog):
+    test_file = str(tmp_path.joinpath('data1.xlsx'))
+    data_1 = {
+        'block': [1],
+        'class': ['test class 1'],
+        'student': ['test 1'],
+    }
+
+    df_1 = pd.DataFrame(data_1)
+    df_1.to_excel(test_file, index=False, engine='xlsxwriter')
+
+    def mock_return(*args, **kwargs):
+        return None
+    
+    schedule_builder = ScheduleBuilder(test_file)
+    monkeypatch.setattr(ScheduleBuilder, '_fill_classes', mock_return)
+    
+    with pytest.raises(SchedulingError) as execinfo:
+        schedule_builder.build_schedule(0.2, str(tmp_path), max_tries=2)
+
+    assert 'No schedule found. Retrying' in caplog.text
+    assert 'Error generating schedule' in str(execinfo.value)
+
+
+def test_fill_classes_match_move_day(tmp_path):
+    test_file = str(tmp_path.joinpath('data1.xlsx'))
+    data = {
+        'block': [1, 2, 1, 2, 1, 2],
+        'class': [
+            'test class 1',
+            'test class 2',
+            'test class 1',
+            'test class 2',
+            'test class 1',
+            'test class 2',
+        ],
+        'student': ['test 1', 'test 1', 'test 2', 'test 2', 'test 3', 'test 3'],
+    }
+
+    df = pd.DataFrame(data)
+    df.to_excel(test_file, index=False, engine='xlsxwriter')
+
+    fill_classes = [
+        {
+            'block': 1,
+            'class_name': 'test class 1',
+            'total_students': 3,
+            'max_students': 2,
+            'num_classes': 2,
+            'classes': [set(), set()],
+        },
+        {
+            'block': 2,
+            'class_name': 'test class 2',
+            'total_students': 3,
+            'max_students': 2,
+            'num_classes': 2,
+            'classes': [set(), set()],
+        },
+    ]
+
+    student_classes_grouped = {
+        'test 1': {'blocks': {1: 'test class 1', 2: 'test class 2'}},
+        'test 2': {'blocks': {1: 'test class 1', 2: 'test class 2'}},
+        'test 3': {'blocks': {1: 'test class 1', 2: 'test class 2'}},
+    }
+    
+    schedule_builder = ScheduleBuilder(test_file)
+
+    fill_classes = schedule_builder._fill_classes(fill_classes, 2, student_classes_grouped)
+    class_size = [[len(y) for y in x['classes']] for x in fill_classes]
+    print(class_size)
+    assert False
+    
 
 
 def test_find_matches(student_matches_check, test_schedule):
@@ -279,7 +433,7 @@ def test_validate_students_fail(tmp_path):
     df_1 = pd.DataFrame(data_1)
     df_1.to_excel(test_file, index=False, engine='xlsxwriter')
 
-    data_2 = data_1 = {
+    data_2 = {
         'block': [1, 3, 2],
         'class': [
             'test class 1',

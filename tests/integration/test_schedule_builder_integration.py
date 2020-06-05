@@ -4,7 +4,6 @@ import pytest
 from pathlib import Path
 from split_schedule.schedule_builder import ScheduleBuilder, SchedulingError
 
-
 @pytest.mark.parametrize('reduce_by', [0.1, 0.2, 0.5])
 @pytest.mark.parametrize('smallest_allowed', [1, 5, 10])
 def test_build_schedule(tmp_path, reduce_by, smallest_allowed, test_schedule):
@@ -31,21 +30,3 @@ def test_build_schedule(tmp_path, reduce_by, smallest_allowed, test_schedule):
 
     assert student_classes == expected_student_classes
     assert columns == expected_columns
-
-
-#def test_max_tries(tmp_path):
-#    data = {
-#        'block': [1, 1, 1, 1, 1, 2, 2, 2],
-#        'class': ['test 1', 'test 2', 'test 3', 'test 4', 'test 4', 'test 4',],
-#        'student': ['s1', 's2', 's3', 's1', 's2', 's3',],
-#    }
-#    df = pd.DataFrame(data)
-#    save_file = str(tmp_path.joinpath('original.xlsx'))
-#    df.to_excel(save_file, index=False, engine='xlsxwriter')
-#    EXPORT_PATH = tmp_path.joinpath('schedule.xlsx')
-#    sb = ScheduleBuilder(save_file)
-#
-#    with pytest.raises(SchedulingError) as execinfo:
-#        sb.build_schedule(0.2, str(EXPORT_PATH), max_tries=1)
-#
-#    assert 'Error generating schedule' in str(execinfo.value)

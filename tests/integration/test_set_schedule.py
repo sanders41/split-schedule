@@ -5,7 +5,6 @@ import sys
 from pathlib import Path
 from split_schedule.set_schedule import main
 
-
 @pytest.mark.parametrize('file_path', ['-f', '--file_path'])
 @pytest.mark.parametrize('output_file_path', ['-o', '--output_file_path'])
 @pytest.mark.parametrize('reduce_by', ['-r', '--reduce_by'])
