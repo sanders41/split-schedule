@@ -51,13 +51,6 @@ def test_get_total_classes(class_size_check, reduce_by, smallest_allowed, test_s
     assert total_classes == check_total_classes
 
 
-def test_group_blocks(group_blocks_check, test_schedule):
-    schedule_builder = ScheduleBuilder(str(test_schedule))
-    group_blocks = schedule_builder._group_blocks()
-
-    assert group_blocks == group_blocks_check
-
-
 @pytest.mark.parametrize('reduce_by', [0.1, 0.2, 0.5])
 @pytest.mark.parametrize('smallest_allowed', [1, 5, 10])
 def test_init_classes(class_size_check, reduce_by, smallest_allowed, test_schedule):

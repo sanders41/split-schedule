@@ -53,10 +53,7 @@ def student_matches_check(test_schedule):
         values='class'
     ).reset_index()
 
-    matches = []
-    for i in range(total_blocks, 1, -1):
-        matches.append({i: []})
-
+    matches = [{i: []} for i in range(total_blocks, 1, -1)]
     all_combinations = []
     for r in range(len(blocks) + 1):
         found_combinations = combinations(blocks, r)
@@ -82,7 +79,7 @@ def student_matches_check(test_schedule):
         for match in match_some_df:
             match_list = match[1][['student']].values.tolist() # type: ignore
             check = [x.pop() for x in match_list if len(match_list) > 1]
-            if len(check) > 0:
+            if check:
                 matches[matches_loc][matches_key].append(check)
 
     return matches 
@@ -91,13 +88,13 @@ def student_matches_check(test_schedule):
 @pytest.fixture(scope='session')
 def student_classes_check(test_schedule):
     df = pd.read_excel(str(test_schedule))
-    student_classes = [
-        {'block': x[1], 'class_name': x[2], 'student': x[0],}
-            for x in df[['student', 'block', 'class']]
-            .sort_values(by=['block', 'class',])
-        .to_numpy()
-    ]
-
+    student_classes = {}
+    for student in df[['student', 'block', 'class']].sort_values(by=['block', 'class',]).to_numpy():
+        if student[0] in student_classes:
+            student_classes[student[0]]['blocks'][student[1]] = student[2]
+        else:
+            student_classes[student[0]] = {'blocks': {student[1]: student[2]}}
+    
     return student_classes
 
 
