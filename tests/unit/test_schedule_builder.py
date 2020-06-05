@@ -1,6 +1,7 @@
 import pandas as pd
 import pytest
 
+from collections import Counter
 from math import ceil, floor
 from pathlib import Path
 from split_schedule.schedule_builder import ScheduleBuilder
@@ -24,6 +25,19 @@ def test_find_matches(student_matches_check, test_schedule):
     matches = schedule_builder._find_matches()
 
     assert matches == student_matches_check
+
+
+def test_find_matches_retry(student_matches_check, test_schedule):
+    schedule_builder = ScheduleBuilder(str(test_schedule))
+    schedule_builder._find_matches()
+    matches = schedule_builder._find_matches()
+
+    m_keys = [x.keys() for x in matches]
+    s_keys = [x.keys() for x in student_matches_check]
+    m_vals = [[[sorted(z) for z in y] for y in (list(x.values()))] for x in matches]
+    s_vals = [[[sorted(z) for z in y] for y in (list(x.values()))] for x in student_matches_check]
+    assert m_keys == s_keys
+    assert m_vals == s_vals
 
 
 def test_get_class_size(class_size_check, test_schedule):

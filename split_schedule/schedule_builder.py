@@ -168,9 +168,7 @@ class ScheduleBuilder:
                             day_tried = day
                             days = []
                             to_add = []
-                            while (
-                                                        len(days) < total_days
-                                                    ):
+                            while (len(days) < total_days):
                                 for c in fill_classes:
                                     if c['class_name'] == student_classes_grouped[person]['blocks'].get(c['block']):
                                         add = {'student': person, 'block': c['block'], 'class_name': c['class_name'], 'class_day': day_tried}
@@ -194,19 +192,35 @@ class ScheduleBuilder:
                             else:
                                 return None
 
-        for c in fill_classes:
-            days = self._create_fill_classes_days(total_classes)
-            for student_name in student_classes_grouped:
-                if student_name not in students_added and c[
-                    'class_name'
-                ] == student_classes_grouped[student_name]['blocks'].get(
-                    c['block']
-                ):
-                    for i in range(total_days):
-                        if len(c['classes'][i]) < c['max_students']:
-                            c['classes'][day].add(student_name)
-                            students_added.add(person)
+        day = randrange(total_days)
+        for student_name in student_classes_grouped:
+            if student_name not in students_added:
+                day_tried = day
+                days = []
+                to_add = []
+                while (len(days) < total_days):
+                    for c in fill_classes:
+                        if c['class_name'] == student_classes_grouped[student_name]['blocks'].get(c['block']):
+                            add = {'student': student_name, 'block': c['block'], 'class_name': c['class_name'], 'class_day': day_tried}
+                            if add not in to_add:
+                                to_add.append(add)
+                    if len(to_add) == len(student_classes_grouped[student_name]['blocks']):
+                        break
+
+                    to_add = []
+                    days.append(day_tried)
+                    for i in range (total_days):
+                        if i not in days:
+                            day_tried = i
                             break
+                if len(to_add) == len(student_classes_grouped[student_name]['blocks']):
+                    for a in to_add:
+                        for c in fill_classes:
+                            if c['block'] == a['block'] and c['class_name'] == a['class_name']:
+                                c['classes'][a['class_day']].add(a['student'])
+                    students_added.add(student_name)
+                else:
+                    return None
 
         return fill_classes
 
