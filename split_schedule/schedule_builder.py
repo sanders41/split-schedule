@@ -29,14 +29,14 @@ class ScheduleBuilder:
     def __init__(self, schedule_file_path: str) -> None:
         self.schedule_df = self._load_data(schedule_file_path)
         self._attempted_df: List[pd.DataFrame] = []
+        self._attempt: int = 1
 
     def build_schedule(
         self,
         reduce_by: float,
         save_path: str,
         smallest_allowed: int=1,
-        max_tries: int=100,
-        _attempt: int=1
+        max_tries: int=100
     ) -> None:
         logger.info('Getting student classes')
         student_classes_grouped = self._get_student_classes()
@@ -62,7 +62,7 @@ class ScheduleBuilder:
         total_classes = self._get_total_classes(reduced_classes)
         logger.info('Getting total classes needed complete')
 
-        logger.info(f'Schedule build try number {_attempt}')
+        logger.info(f'Schedule build try number {self._attempt}')
 
         logging.info('Filling blocks')
         fill_classes = self._fill_classes(
@@ -99,10 +99,10 @@ class ScheduleBuilder:
                 or validated_same_days is not None
                 or validated_students
             ):
-                if _attempt < max_tries:
+                if self._attempt < max_tries:
                     logger.info('No schedule found. Retrying')
-                    _attempt += 1
-                    self.build_schedule(reduce_by, save_path, smallest_allowed, max_tries, _attempt)
+                    self._attempt += 1
+                    self.build_schedule(reduce_by, save_path, smallest_allowed, max_tries)
                 else:
                     raise SchedulingError('Error generating schedule')
 
@@ -112,10 +112,10 @@ class ScheduleBuilder:
             self._save_schedule_to_file(fill_class_df, save_path)
             logger.info('Saving schedule complete')
         else:
-            if _attempt < max_tries:
+            if self._attempt < max_tries:
                 logger.info('No schedule found. Retrying')
-                _attempt += 1
-                self.build_schedule(reduce_by, save_path, smallest_allowed, max_tries, _attempt)
+                self._attempt += 1
+                self.build_schedule(reduce_by, save_path, smallest_allowed, max_tries)
             else:
                 raise SchedulingError('Error generating schedule')
             
