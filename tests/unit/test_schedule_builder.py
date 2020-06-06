@@ -37,7 +37,7 @@ def test_build_schedule_validated_classs_size(monkeypatch, tmp_path, caplog, max
         schedule_builder.build_schedule(0.2, str(tmp_path), max_tries=max_tries)
 
     assert 'Classes contain too many students' in caplog.text
-    assert 'Error generating schedule' in str(execinfo.value)
+    assert 'No possible schedule found' in str(execinfo.value)
 
 
 @pytest.mark.parametrize('max_tries', [1, 2])
@@ -68,7 +68,7 @@ def test_build_schedule_validated_classes_number(monkeypatch, tmp_path, caplog, 
         schedule_builder.build_schedule(0.2, str(tmp_path), max_tries=max_tries)
 
     assert 'Student missing' in caplog.text
-    assert 'Error generating schedule' in str(execinfo.value)
+    assert 'No possible schedule found' in str(execinfo.value)
 
 
 @pytest.mark.parametrize('max_tries', [1, 2])
@@ -102,7 +102,7 @@ def test_build_schedule_validated_same_day(monkeypatch, tmp_path, caplog, max_tr
         schedule_builder.build_schedule(0.2, str(tmp_path), max_tries=max_tries)
 
     assert 'Student not on the same day' in caplog.text
-    assert 'Error generating schedule' in str(execinfo.value)
+    assert 'No possible schedule found' in str(execinfo.value)
 
 
 @pytest.mark.parametrize('max_tries', [1, 2])
@@ -127,7 +127,7 @@ def test_build_schedule_validated_students(monkeypatch, tmp_path, caplog, max_tr
         schedule_builder.build_schedule(0.2, str(tmp_path), max_tries=max_tries)
 
     assert 'Student original number' in caplog.text
-    assert 'Error generating schedule' in str(execinfo.value)
+    assert 'No possible schedule found' in str(execinfo.value)
 
 
 def test_build_schedule_restart(monkeypatch, tmp_path, caplog):
@@ -151,7 +151,7 @@ def test_build_schedule_restart(monkeypatch, tmp_path, caplog):
         schedule_builder.build_schedule(0.2, str(tmp_path), max_tries=2)
 
     assert 'No schedule found. Retrying' in caplog.text
-    assert 'Error generating schedule' in str(execinfo.value)
+    assert 'No possible schedule found' in str(execinfo.value)
 
 
 def test_fill_classes_match_no_space(tmp_path):

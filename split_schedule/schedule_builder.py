@@ -36,7 +36,7 @@ class ScheduleBuilder:
         reduce_by: float,
         save_path: str,
         smallest_allowed: int=1,
-        max_tries: int=20
+        max_tries: int=10
     ) -> None:
         logger.info('Getting student classes')
         student_classes_grouped = self._get_student_classes()
@@ -109,7 +109,7 @@ class ScheduleBuilder:
                     self._attempt += 1
                     self.build_schedule(reduce_by, save_path, smallest_allowed, max_tries)
                 else:
-                    raise SchedulingError('Error generating schedule')
+                    raise SchedulingError('No possible schedule found')
 
             logger.info('Validation complete')
 
@@ -122,7 +122,7 @@ class ScheduleBuilder:
                 self._attempt += 1
                 self.build_schedule(reduce_by, save_path, smallest_allowed, max_tries)
             else:
-                raise SchedulingError('Error generating schedule')
+                raise SchedulingError('No possible schedule found')
 
     def _expand_fill_classes(self, fill_classes: List[ScheduleDays]) -> pd.DataFrame:
         fill_classes_expanded = []

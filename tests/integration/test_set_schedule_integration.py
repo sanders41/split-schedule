@@ -9,8 +9,10 @@ from split_schedule.set_schedule import main
 @pytest.mark.parametrize('output_file_path', ['-o', '--output_file_path'])
 @pytest.mark.parametrize('reduce_by', ['-r', '--reduce_by'])
 @pytest.mark.parametrize('smallest_allowed', ['-s', '--smallest_allowed', None])
+@pytest.mark.parametrize('max_retries', ['-m', '--max_retries', None])
 @pytest.mark.parametrize('reduce_by_amount', ['0.1', '0.2', '0.5'])
 @pytest.mark.parametrize('smallest_allowed_amount', ['1', '5', '10'])
+@pytest.mark.parametrize('max_retries_amount', ['5', '10'])
 def test_set_schedule(
     monkeypatch,
     tmp_path,
@@ -18,8 +20,10 @@ def test_set_schedule(
     output_file_path,
     reduce_by,
     smallest_allowed,
+    max_retries,
     reduce_by_amount,
     smallest_allowed_amount,
+    max_retries_amount,
     test_schedule
 ):
     EXPORT_PATH = tmp_path.joinpath('schedule.xlsx')
@@ -36,6 +40,10 @@ def test_set_schedule(
     if smallest_allowed:
         args.append(smallest_allowed)
         args.append(smallest_allowed_amount)
+
+    if max_retries:
+        args.append(max_retries)
+        args.append(max_retries_amount)
 
     expected_df = pd.read_excel(str(test_schedule))
     expected_student_classes = expected_df.groupby('student').size().to_dict()

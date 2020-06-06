@@ -56,7 +56,16 @@ def parse_args(args: List[str]) -> argparse.Namespace:
         type=int,
         default=1,
         dest='smallest_allowed',
-        help='If this number is greater than the calculated reduce by value then reduce by will be overriden, and this will be used to reduce class sized'
+        help='If this number is greater than the calculated reduce by value then reduce by will be overriden, and this will be used to reduce class sized. The default value is 1'
+    )
+    parser.add_argument(
+        '-m',
+        '--max_retries',
+        required=False,
+        type=int,
+        default=10,
+        dest='max_tries',
+        help='The maximum number of times the program will try to find a possible schedule if an attempted schedule was not found. The default value is 10'
     )
 
     return parser.parse_args(args)
@@ -68,7 +77,8 @@ def main() -> None:
     schedule_builder.build_schedule(
         reduce_by=args.reduce_by,
         save_path=str(args.output_file_path),
-        smallest_allowed=args.smallest_allowed
+        smallest_allowed=args.smallest_allowed,
+        max_tries=args.max_tries,
     )
 
 
