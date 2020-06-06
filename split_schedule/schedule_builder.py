@@ -250,9 +250,10 @@ class ScheduleBuilder:
             self._attempted_df.append(match_df)
         else:
             logger.info('Finding unused student order')
+            total_attempted_pre = len(self._attempted_df)
             total_attempted = len(self._attempted_df)
             attempt_number = 1
-            while False not in [match_df.equals(x) for x in self._attempted_df]:
+            while False in [match_df.equals(x) for x in self._attempted_df]:
                 self._attempted_df.append(match_df)
                 match_df = match_df.sample(frac=1)
                 if attempt_number == total_attempted:
@@ -260,7 +261,10 @@ class ScheduleBuilder:
                     break
                 attempt_number += 1
 
-            logger.info('Unused student order found')
+            if len(self._attempted_df) <= total_attempted_pre:
+                logger.info('No unused matches found')
+            else:
+                logger.info('Unused student order found')
 
         matches: List[Dict[int, List[List[str]]]] = []
         for i in range(total_blocks, 1, -1):

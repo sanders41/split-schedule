@@ -2,6 +2,7 @@ import pandas as pd
 import pytest
 
 from collections import Counter
+from itertools import combinations
 from math import ceil, floor
 from pathlib import Path
 from split_schedule.schedule_builder import ScheduleBuilder, SchedulingError
@@ -153,6 +154,88 @@ def test_build_schedule_restart(monkeypatch, tmp_path, caplog):
     assert 'Error generating schedule' in str(execinfo.value)
 
 
+def test_fill_classes_match_no_space(tmp_path):
+    test_file = str(tmp_path.joinpath('data1.xlsx'))
+    data = {
+        'block': [1, 1, 2, 2],
+        'class': [
+            'test class 1',
+            'test class 1',
+            'test class 2',
+            'test class 2',
+        ],
+        'student': ['test 1', 'test 2', 'test 1', 'test 2'],
+    }
+
+    df = pd.DataFrame(data)
+    df.to_excel(test_file, index=False, engine='xlsxwriter')
+
+    fill_classes = [
+        {
+            'block': 1,
+            'class_name': 'test class 1',
+            'total_students': 2,
+            'max_students': 1,
+            'num_classes': 1,
+            'classes': [set()],
+        },
+        {
+            'block': 2,
+            'class_name': 'test class 2',
+            'total_students': 2,
+            'max_students': 1,
+            'num_classes': 1,
+            'classes': [set()],
+        },
+    ]
+
+    student_classes_grouped = {
+        'test 1': {'blocks': {1: 'test class 1', 2: 'test class 2'}},
+        'test 2': {'blocks': {1: 'test class 1', 2: 'test class 2'}},
+    }
+    
+    schedule_builder = ScheduleBuilder(test_file)
+
+    fill_classes = schedule_builder._fill_classes(fill_classes, 1, student_classes_grouped)
+
+    assert not fill_classes
+
+
+def test_fill_classes_no_match_no_space(tmp_path):
+    test_file = str(tmp_path.joinpath('data1.xlsx'))
+    data = {
+        'block': [1],
+        'class': [
+            'test class 1',
+        ],
+        'student': ['test 1'],
+    }
+
+    df = pd.DataFrame(data)
+    df.to_excel(test_file, index=False, engine='xlsxwriter')
+
+    fill_classes = [
+        {
+            'block': 1,
+            'class_name': 'test class 1',
+            'total_students': 1,
+            'max_students': 0,
+            'num_classes': 1,
+            'classes': [set()],
+        },
+    ]
+
+    student_classes_grouped = {
+        'test 1': {'blocks': {1: 'test class 1', 2: 'test class 2'}},
+    }
+    
+    schedule_builder = ScheduleBuilder(test_file)
+
+    fill_classes = schedule_builder._fill_classes(fill_classes, 1, student_classes_grouped)
+
+    assert not fill_classes
+
+
 def test_fill_classes_match_move_day(tmp_path):
     test_file = str(tmp_path.joinpath('data1.xlsx'))
     data = {
@@ -204,12 +287,80 @@ def test_fill_classes_match_move_day(tmp_path):
     expected = [[1, 2], [1, 2]]
     assert expected == class_size
 
-
 def test_find_matches(student_matches_check, test_schedule):
     schedule_builder = ScheduleBuilder(str(test_schedule))
     matches = schedule_builder._find_matches()
 
     assert matches == student_matches_check
+
+
+def test_find_matches_unused_order_found(tmp_path, caplog):
+    test_file = str(tmp_path.joinpath('data1.xlsx'))
+    data = {
+        'block': [1, 1, 2, 2],
+        'class': [
+            'test class 1',
+            'test class 1',
+            'test class 2',
+            'test class 2',
+        ],
+        'student': ['test 1', 'test 2', 'test 1', 'test 2'],
+    }
+
+    df = pd.DataFrame(data)
+    df.to_excel(test_file, index=False, engine='xlsxwriter')
+
+    class TestingScheduleBuilder(ScheduleBuilder):
+     def __init__(self, schedule_file_path):
+        self.schedule_df = self._load_data(schedule_file_path)
+        self._attempted_df = [df]
+        self._attempt = 1
+
+    schedule_builder = TestingScheduleBuilder(test_file)
+    matches = schedule_builder._find_matches()
+    
+    assert 'Unused student order found' in caplog.text
+
+
+def test_find_matches_unused_order_not_found(tmp_path, caplog):
+    test_file = str(tmp_path.joinpath('data1.xlsx'))
+    data_1 = {
+        'block': [1, 1, 2, 2],
+        'class': [
+            'test class 1',
+            'test class 1',
+            'test class 2',
+            'test class 2',
+        ],
+        'student': ['test 1', 'test 2', 'test 1', 'test 2'],
+    }
+
+    df_1 = pd.DataFrame(data_1)
+    df_1.to_excel(test_file, index=False, engine='xlsxwriter')
+    
+    data_2 = {
+        'block': [1, 1, 2, 2],
+        'class': [
+            'test class 1',
+            'test class 1',
+            'test class 2',
+            'test class 2',
+        ],
+        'student': ['test 2', 'test 1', 'test 2', 'test 1'],
+    }
+
+    df_2 = pd.DataFrame(data_2)
+
+    class TestingScheduleBuilder(ScheduleBuilder):
+     def __init__(self, schedule_file_path):
+        self.schedule_df = self._load_data(schedule_file_path)
+        self._attempted_df = [df_1, df_2]
+        self._attempt = 1
+
+    schedule_builder = TestingScheduleBuilder(test_file)
+    matches = schedule_builder._find_matches()
+    
+    assert 'No unused matches found' in caplog.text
 
 
 def test_find_matches_retry(student_matches_check, test_schedule):
