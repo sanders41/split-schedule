@@ -168,9 +168,6 @@ class ScheduleBuilder:
                             to_add = []
                             while (len(days) < total_days):
                                 for c in fill_classes:
-                                    #print(len(c['classes'][day_tried]))
-                                    #print(c['max_students'])
-                                    #print(c['classes'][day_tried])
                                     if (
                                         c['class_name'] == student_classes_grouped[person]['blocks'].get(c['block'])
                                         and len(c['classes'][day_tried]) < c['max_students']
