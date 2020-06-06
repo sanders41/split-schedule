@@ -9,6 +9,37 @@ from tests.helpers import init_classes_check, reduce_classes_check, total_classe
 
 
 @pytest.mark.parametrize('max_tries', [1, 2])
+def test_build_schedule_validated_classs_size(monkeypatch, tmp_path, caplog, max_tries):
+    test_file = str(tmp_path.joinpath('data1.xlsx'))
+    data_1 = {
+        'block': [1],
+        'class': ['test class 1'],
+        'student': ['test 1'],
+    }
+
+    df_1 = pd.DataFrame(data_1)
+    df_1.to_excel(test_file, index=False, engine='xlsxwriter')
+
+    def mock_return(*args, **kwargs):
+        return pd.DataFrame(
+            {
+                'student': ['test 1'],
+                'original': 3,
+                'scheduled': 2,
+            }
+        ).set_index('student')
+
+    schedule_builder = ScheduleBuilder(test_file)
+    monkeypatch.setattr(ScheduleBuilder, '_validate_class_size', mock_return)
+    
+    with pytest.raises(SchedulingError) as execinfo:
+        schedule_builder.build_schedule(0.2, str(tmp_path), max_tries=max_tries)
+
+    assert 'Classes contain too many students' in caplog.text
+    assert 'Error generating schedule' in str(execinfo.value)
+
+
+@pytest.mark.parametrize('max_tries', [1, 2])
 def test_build_schedule_validated_classes_number(monkeypatch, tmp_path, caplog, max_tries):
     test_file = str(tmp_path.joinpath('data1.xlsx'))
     data_1 = {
@@ -168,10 +199,10 @@ def test_fill_classes_match_move_day(tmp_path):
     schedule_builder = ScheduleBuilder(test_file)
 
     fill_classes = schedule_builder._fill_classes(fill_classes, 2, student_classes_grouped)
-    class_size = [[len(y) for y in x['classes']] for x in fill_classes]
-    print(class_size)
-    assert False
-    
+    class_size = [sorted([len(y) for y in x['classes']]) for x in fill_classes]
+
+    expected = [[1, 2], [1, 2]]
+    assert expected == class_size
 
 
 def test_find_matches(student_matches_check, test_schedule):
@@ -281,6 +312,58 @@ def test_save_schedule_check_columns(tmp_path, test_schedule):
     columns = df_saved.columns.values.tolist()
 
     assert columns == ['day_number', 'block', 'class']
+
+
+def test_validate_class_size_pass(tmp_path):
+    test_file = str(tmp_path.joinpath('test.xlsx'))
+
+    data = {
+        'block': [1, 1,],
+        'class': ['test class 1', 'test class 1',],
+        'total_students': [2, 2,],
+        'max_students': [2, 2,],
+        'num_classes': [1, 1,],
+        'day_number': [1, 1,],
+        'student': ['test 1', 'test 2',],
+    }
+    df = pd.DataFrame(data)
+    df.to_excel(test_file, index=False, engine='xlsxwriter')
+    
+    schedule_builder = ScheduleBuilder(test_file)
+    validate_df = schedule_builder._validate_class_size(df)
+
+    assert not validate_df
+
+
+def test_validate_class_size_fail(tmp_path):
+    test_file = str(tmp_path.joinpath('test.xlsx'))
+
+    data = {
+        'block': [1, 1,],
+        'class': ['test class 1', 'test class 1',],
+        'total_students': [2, 2,],
+        'max_students': [1, 1,],
+        'num_classes': [1, 1,],
+        'day_number': [1, 1,],
+        'student': ['test 1', 'test 2',],
+    }
+    df = pd.DataFrame(data)
+    df.to_excel(test_file, index=False, engine='xlsxwriter')
+    
+    schedule_builder = ScheduleBuilder(test_file)
+    validate_df = schedule_builder._validate_class_size(df)
+
+    expected_df = pd.DataFrame(
+        {
+            'block': [1],
+            'class': ['test class 1'],
+            'max_students': [1],
+            'day_number': [1],
+            'class_size': [2],
+        }
+    )
+
+    assert expected_df.equals(validate_df)
 
 
 def test_validate_classes_pass(tmp_path):

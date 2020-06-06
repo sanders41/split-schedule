@@ -78,9 +78,14 @@ class ScheduleBuilder:
             logger.info('Formatting classes complete')
 
             logger.info('Validating generated schedule')
+            validated_class_size = self._validate_class_size(fill_class_df)
             validated_classes_numbers = self._validate_classes(fill_class_df)
             validated_same_days = self._validate_same_day(fill_class_df)
             validated_students = self._validate_students(fill_class_df)
+
+            if validated_class_size is not None:
+                logger.error('Classes contain too many students')
+                print(validated_class_size)
 
             if validated_classes_numbers is not None:
                 logger.error('Student missing from the generated schedule')
@@ -95,7 +100,8 @@ class ScheduleBuilder:
                 print(validated_students)
 
             if (
-                validated_classes_numbers is not None
+                validated_class_size is not None
+                or validated_classes_numbers is not None
                 or validated_same_days is not None
                 or validated_students
             ):
@@ -162,6 +168,9 @@ class ScheduleBuilder:
                             to_add = []
                             while (len(days) < total_days):
                                 for c in fill_classes:
+                                    #print(len(c['classes'][day_tried]))
+                                    #print(c['max_students'])
+                                    #print(c['classes'][day_tried])
                                     if (
                                         c['class_name'] == student_classes_grouped[person]['blocks'].get(c['block'])
                                         and len(c['classes'][day_tried]) < c['max_students']
@@ -366,6 +375,27 @@ class ScheduleBuilder:
     def _save_schedule_to_file(self, df: pd.DataFrame, save_path: str) -> None:
         df = df.sort_values(by=['day_number', 'block', 'class'])
         df.to_excel(save_path, index=False, engine='xlsxwriter')
+
+    def _validate_class_size(self, reduced_df: pd.DataFrame) -> Optional[pd.DataFrame]:
+        df = (
+            reduced_df
+            .groupby(['block', 'class', 'day_number'])
+            .size()
+            .to_frame('class_size').reset_index()
+        )
+        reduced_df = (
+            reduced_df[['block', 'class', 'max_students']]
+            .drop_duplicates()
+            .merge(df, on=['block', 'class'])
+        )
+
+        reduced_df['match'] = np.where(reduced_df['max_students'] >= reduced_df['class_size'], 1, 0)
+        reduced_df = reduced_df[reduced_df['match'] == 0]
+
+        if reduced_df.empty:
+            return None
+
+        return reduced_df.drop(columns=['match'])
 
     def _validate_classes(self, reduced_df: pd.DataFrame) -> Optional[pd.DataFrame]:
         df_main_grouped = self.schedule_df.groupby('student').size().to_frame('original')
