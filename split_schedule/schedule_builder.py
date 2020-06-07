@@ -7,11 +7,9 @@ from math import ceil, floor
 from operator import itemgetter
 from random import randrange, shuffle
 from split_schedule.schedule_types import (
-    GroupedBlock,
     ReducedClass,
     ScheduleDays,
     ScheduleTotalStudents,
-    StudentClass
 )
 from typing import Dict, List, Optional, Set, Tuple
 
@@ -149,10 +147,9 @@ class ScheduleBuilder:
         self,
         fill_classes: List[ScheduleDays],
         total_classes: int,
-        student_classes_grouped: List[GroupedBlock]
-    ) -> List[List[List[StudentClass]]]:
+        student_classes_grouped: Dict[str, Dict[str, Dict[int, str]]]
+    ) -> Optional[List[ScheduleDays]]:
         matches = self._find_matches()
-        group_blocks = []
         students_added = set()
 
         total_days = len(fill_classes[0]['classes'])
@@ -164,7 +161,7 @@ class ScheduleBuilder:
                     for person in people:
                         if person not in students_added:
                             day_tried = day
-                            days = []
+                            days: List[int] = []
                             to_add = []
                             while (len(days) < total_days):
                                 for c in fill_classes:
@@ -193,7 +190,7 @@ class ScheduleBuilder:
                                             and c['class_name'] == a['class_name']
                                             and len(c['classes'][day_tried]) < c['max_students']
                                         ):
-                                            c['classes'][a['class_day']].add(a['student'])
+                                            c['classes'][a['class_day']].add(a['student']) # type: ignore
                                 students_added.add(person)
                             else:
                                 return None
@@ -230,11 +227,11 @@ class ScheduleBuilder:
                                 and c['class_name'] == a['class_name']
                                 and len(c['classes'][day_tried]) < c['max_students']
                             ):
-                                c['classes'][a['class_day']].add(a['student'])
+                                c['classes'][a['class_day']].add(a['student']) # type: ignore
                     students_added.add(student_name)
                 else:
                     return None
-
+        
         return fill_classes
 
     def _find_matches(self) -> List[Dict[int, List[List[str]]]]:
@@ -312,14 +309,14 @@ class ScheduleBuilder:
             for x in class_size.to_numpy()
         ]
 
-    def _get_student_classes(self) -> List[StudentClass]:
-        student_classes = {}
+    def _get_student_classes(self) -> Dict[str, Dict[str, Dict[int, str]]]:
+        student_classes: Dict[str, Dict[str, Dict[int, str]]]= {}
         for student in self.schedule_df[['student', 'block', 'class']].sort_values(by=['block', 'class',]).to_numpy():
             if student[0] in student_classes:
                 student_classes[student[0]]['blocks'][student[1]] = student[2]
             else:
                 student_classes[student[0]] = {'blocks': {student[1]: student[2]}}
-        
+
         return student_classes
 
     def _get_total_classes(self, reduced_classes: List[ReducedClass]) -> int:
