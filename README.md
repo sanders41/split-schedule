@@ -23,7 +23,7 @@ The generated schedule will be an Excel file with the fillowing columns:
 Start by cloning this repository.
 
 ```
-git clone https://github.com/sanders41/sas7bdat_converter.git
+git clone https://github.com/sanders41/split_schedule.git
 ```
 
 **Note:** Python 3.8 or greater is required
@@ -39,7 +39,7 @@ pip install .
 ## Arguments
 
 * -h, --help: show this help message and exit
-* -f file_path: Required
+* -f, --file_path: Required
   * The path to the file containing the original schedule
 * -o, --output_file_path: Required
   * The path (including file name) where the generated schedule should be saved
