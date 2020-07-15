@@ -350,7 +350,7 @@ class ScheduleBuilder:
         return classes
 
     def _load_data(self, file_path: str) -> pd.DataFrame:
-        df = pd.read_excel(file_path)
+        df = pd.read_excel(file_path, engine='openpyxl')
         df = df.dropna()
         return df
 

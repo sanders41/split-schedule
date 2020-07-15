@@ -45,7 +45,7 @@ def test_set_schedule(
         args.append(max_retries)
         args.append(max_retries_amount)
 
-    expected_df = pd.read_excel(str(test_schedule))
+    expected_df = pd.read_excel(str(test_schedule), engine='openpyxl')
     expected_student_classes = expected_df.groupby('student').size().to_dict()
 
     expected_columns = [
@@ -62,7 +62,7 @@ def test_set_schedule(
         m.setattr(sys, 'argv', args)
         main()
 
-    df = pd.read_excel(str(EXPORT_PATH))
+    df = pd.read_excel(str(EXPORT_PATH), engine='openpyxl')
     student_classes = df.groupby('student').size().to_dict()
     columns = df.columns.values.tolist()
 

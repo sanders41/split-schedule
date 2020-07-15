@@ -413,7 +413,7 @@ def test_init_classes(class_size_check, reduce_by, smallest_allowed, test_schedu
 
 def test_init_schedule_builder(test_schedule):
     schedule_builder = ScheduleBuilder(str(test_schedule))
-    test = pd.read_excel(str(test_schedule))
+    test = pd.read_excel(str(test_schedule), engine='openpyxl')
 
     assert test.equals(schedule_builder.schedule_df)
 
@@ -459,7 +459,7 @@ def test_save_schedule_check_columns(tmp_path, test_schedule):
 
     schedule_builder = ScheduleBuilder(str(test_schedule))
     schedule_builder._save_schedule_to_file(df, str(EXPORT_PATH))
-    df_saved = pd.read_excel(EXPORT_PATH)
+    df_saved = pd.read_excel(EXPORT_PATH, engine='openpyxl')
     columns = df_saved.columns.values.tolist()
 
     assert columns == ['day_number', 'block', 'class']

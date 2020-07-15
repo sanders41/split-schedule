@@ -15,7 +15,7 @@ setup(
     packages=['split_schedule'],
     install_requires=[
         'pandas>=1.0.4',
-        'xlrd==1.2.0',
+        'openpyxl>=3.0.4',
         'XlsxWriter==1.2.9',
     ],
     classifiers=[

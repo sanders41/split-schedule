@@ -9,7 +9,7 @@ from pathlib import Path
 
 @pytest.fixture(scope='session')
 def class_size_check(test_schedule):
-    df = pd.read_excel(str(test_schedule))
+    df = pd.read_excel(str(test_schedule), engine='openpyxl')
     class_size = df.groupby(['block', 'class',]).size().to_frame().reset_index()
     class_size = [
         {'block': x[0], 'class_name': x[1], 'total_students': x[2]} for x in class_size.to_numpy()
@@ -20,7 +20,7 @@ def class_size_check(test_schedule):
 
 @pytest.fixture(scope='session')
 def group_blocks_check(test_schedule):
-    df = pd.read_excel(str(test_schedule))
+    df = pd.read_excel(str(test_schedule), engine='openpyxl')
     student_classes = [
         {'block': x[1], 'class_name': x[2], 'student': x[0],}
             for x in df[['student', 'block', 'class']]
@@ -44,7 +44,7 @@ def group_blocks_check(test_schedule):
 
 @pytest.fixture(scope='session')
 def student_matches_check(test_schedule):
-    df = pd.read_excel(str(test_schedule))
+    df = pd.read_excel(str(test_schedule), engine='openpyxl')
     blocks = df['block'].sort_values().unique()
     total_blocks = df['block'].max()
     match_df = df.pivot(
@@ -87,7 +87,7 @@ def student_matches_check(test_schedule):
 
 @pytest.fixture(scope='session')
 def student_classes_check(test_schedule):
-    df = pd.read_excel(str(test_schedule))
+    df = pd.read_excel(str(test_schedule), engine='openpyxl')
     student_classes = {}
     for student in df[['student', 'block', 'class']].sort_values(by=['block', 'class',]).to_numpy():
         if student[0] in student_classes:
