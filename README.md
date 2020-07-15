@@ -1,6 +1,6 @@
 # Split Schedule
 
-This progam takes a schools class list and reduces the number of students in each class by a specified amount. This is done by splitting the classes across day. Each individual student's day is kept the same or each of his/her classes. 
+This progam takes a schools class list and reduces the number of students in each class by a specified amount. This is done by splitting the classes across day. Each individual student's day is kept the same for each of his/her classes. 
 
 The class list should be supplied as an Excel file with all students on a single sheet containing the columns:
 
