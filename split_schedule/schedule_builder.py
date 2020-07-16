@@ -6,6 +6,7 @@ from typing import Dict, List, Optional, Set
 
 import numpy as np
 import pandas as pd
+
 from split_schedule.schedule_types import ReducedClass, ScheduleDays, ScheduleTotalStudents
 
 logging.basicConfig(format="%(asctime)s: %(levelname)s: %(message)s")
