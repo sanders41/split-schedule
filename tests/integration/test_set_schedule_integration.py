@@ -2,7 +2,6 @@ import sys
 
 import pandas as pd
 import pytest
-
 from split_schedule.set_schedule import main
 
 

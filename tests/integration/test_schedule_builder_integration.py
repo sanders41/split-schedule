@@ -1,6 +1,5 @@
 import pandas as pd
 import pytest
-
 from split_schedule.schedule_builder import ScheduleBuilder
 
 

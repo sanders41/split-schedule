@@ -4,7 +4,6 @@ from typing import List, Set
 
 from split_schedule.schedule_types import ScheduleDays
 
-
 ASSETS_PATH = Path().absolute().joinpath("tests/assets/")
 TEST_FILE_PATH = ASSETS_PATH.joinpath("classes.xlsx")
 
