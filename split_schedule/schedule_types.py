@@ -1,4 +1,4 @@
-from typing import List, TypedDict, Set
+from typing import List, Set, TypedDict
 
 
 class BaseSchedule(TypedDict):
