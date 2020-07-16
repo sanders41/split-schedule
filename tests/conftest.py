@@ -17,28 +17,6 @@ def class_size_check(test_schedule):
     return class_size
 
 
-#@pytest.fixture(scope="session")
-#def group_blocks_check(test_schedule):
-#    df = pd.read_excel(str(test_schedule), engine="openpyxl")
-#    student_classes = [
-#        {"block": x[1], "class_name": x[2], "student": x[0],}
-#        for x in df[["student", "block", "class"]].sort_values(by=["block", "class",]).to_numpy()
-#    ]
-#
-#    student_classes_sorted = sorted(student_classes, key=itemgetter("block", "class_name",))
-#    grouped_classes = [
-#        {"block": x[0][0], "class_name": x[0][1], "students": list(x[1])}
-#        for x in groupby(student_classes_sorted, key=itemgetter("block", "class_name",))
-#    ]
-#
-#    grouped_blocks: List[GroupedBlock] = [
-#        {"block": x[0], "classes": list(x[1])}  # type: ignore
-#        for x in groupby(grouped_classes, key=itemgetter("block"))
-#    ]
-#
-#    return grouped_blocks
-
-
 @pytest.fixture(scope="session")
 def student_matches_check(test_schedule):
     df = pd.read_excel(str(test_schedule), engine="openpyxl")
