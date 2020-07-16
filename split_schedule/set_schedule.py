@@ -7,7 +7,7 @@ from split_schedule.schedule_builder import ScheduleBuilder
 
 
 class FileCheckAction(argparse.Action):
-    def __call__( # type: ignore
+    def __call__(  # type: ignore
         self,
         parser: argparse.ArgumentParser,
         namespace: argparse.Namespace,
