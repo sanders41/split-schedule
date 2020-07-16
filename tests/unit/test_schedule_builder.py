@@ -1,5 +1,6 @@
 import pandas as pd
 import pytest
+
 from split_schedule.schedule_builder import ScheduleBuilder, SchedulingError
 from tests.helpers import init_classes_check, reduce_classes_check, total_classes_check
 
