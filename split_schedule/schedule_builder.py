@@ -83,19 +83,15 @@ class ScheduleBuilder:
 
             if validated_class_size is not None:
                 logger.error('Classes contain too many students')
-                print(validated_class_size)
 
             if validated_classes_numbers is not None:
                 logger.error('Student missing from the generated schedule')
-                print(validated_classes_numbers)
 
             if validated_same_days is not None:
                 logger.error('Student not on the same day')
-                print(validated_same_days)
             
             if validated_students:
                 logger.error('Student original number of classes and generated number of classes do not match')
-                print(validated_students)
 
             if (
                 validated_class_size is not None
