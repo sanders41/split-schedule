@@ -18,9 +18,13 @@ def test_build_schedule_validated_classs_size(monkeypatch, tmp_path, caplog, max
     df_1.to_excel(test_file, index=False, engine="xlsxwriter")
 
     def mock_return(*args, **kwargs):
-        return pd.DataFrame({"student": ["test 1"], "original": 3, "scheduled": 2,}).set_index(
-            "student"
-        )
+        return pd.DataFrame(
+            {
+                "student": ["test 1"],
+                "original": 3,
+                "scheduled": 2,
+            }
+        ).set_index("student")
 
     schedule_builder = ScheduleBuilder(test_file)
     monkeypatch.setattr(ScheduleBuilder, "_validate_class_size", mock_return)
@@ -76,13 +80,41 @@ def test_build_schedule_validated_same_day(monkeypatch, tmp_path, caplog, max_tr
     df_1.to_excel(test_file, index=False, engine="xlsxwriter")
 
     data_2 = {
-        "block": [1, 1, 2,],
-        "class": ["test class 1", "test class 1", "test class 3",],
-        "total_students": [2, 2, 1,],
-        "max_students": [2, 2, 1,],
-        "num_classes": [1, 1, 1,],
-        "day_number": [1, 1, 2,],
-        "student": ["test 1", "test 2", "test 1",],
+        "block": [
+            1,
+            1,
+            2,
+        ],
+        "class": [
+            "test class 1",
+            "test class 1",
+            "test class 3",
+        ],
+        "total_students": [
+            2,
+            2,
+            1,
+        ],
+        "max_students": [
+            2,
+            2,
+            1,
+        ],
+        "num_classes": [
+            1,
+            1,
+            1,
+        ],
+        "day_number": [
+            1,
+            1,
+            2,
+        ],
+        "student": [
+            "test 1",
+            "test 2",
+            "test 1",
+        ],
     }
 
     def mock_return_validated_days(*args, **kwargs):
@@ -151,7 +183,12 @@ def test_fill_classes_match_no_space(tmp_path):
     test_file = str(tmp_path.joinpath("data1.xlsx"))
     data = {
         "block": [1, 1, 2, 2],
-        "class": ["test class 1", "test class 1", "test class 2", "test class 2",],
+        "class": [
+            "test class 1",
+            "test class 1",
+            "test class 2",
+            "test class 2",
+        ],
         "student": ["test 1", "test 2", "test 1", "test 2"],
     }
 
@@ -193,7 +230,9 @@ def test_fill_classes_no_match_no_space(tmp_path):
     test_file = str(tmp_path.joinpath("data1.xlsx"))
     data = {
         "block": [1],
-        "class": ["test class 1",],
+        "class": [
+            "test class 1",
+        ],
         "student": ["test 1"],
     }
 
@@ -285,7 +324,12 @@ def test_find_matches_unused_order_found(tmp_path, caplog):
     test_file = str(tmp_path.joinpath("data1.xlsx"))
     data = {
         "block": [1, 1, 2, 2],
-        "class": ["test class 1", "test class 1", "test class 2", "test class 2",],
+        "class": [
+            "test class 1",
+            "test class 1",
+            "test class 2",
+            "test class 2",
+        ],
         "student": ["test 1", "test 2", "test 1", "test 2"],
     }
 
@@ -299,7 +343,7 @@ def test_find_matches_unused_order_found(tmp_path, caplog):
             self._attempt = 1
 
     schedule_builder = TestingScheduleBuilder(test_file)
-    matches = schedule_builder._find_matches()
+    schedule_builder._find_matches()
 
     assert "Unused student order found" in caplog.text
 
@@ -308,7 +352,12 @@ def test_find_matches_unused_order_not_found(tmp_path, caplog):
     test_file = str(tmp_path.joinpath("data1.xlsx"))
     data_1 = {
         "block": [1, 1, 2, 2],
-        "class": ["test class 1", "test class 1", "test class 2", "test class 2",],
+        "class": [
+            "test class 1",
+            "test class 1",
+            "test class 2",
+            "test class 2",
+        ],
         "student": ["test 1", "test 2", "test 1", "test 2"],
     }
 
@@ -317,7 +366,12 @@ def test_find_matches_unused_order_not_found(tmp_path, caplog):
 
     data_2 = {
         "block": [1, 1, 2, 2],
-        "class": ["test class 1", "test class 1", "test class 2", "test class 2",],
+        "class": [
+            "test class 1",
+            "test class 1",
+            "test class 2",
+            "test class 2",
+        ],
         "student": ["test 2", "test 1", "test 2", "test 1"],
     }
 
@@ -330,7 +384,7 @@ def test_find_matches_unused_order_not_found(tmp_path, caplog):
             self._attempt = 1
 
     schedule_builder = TestingScheduleBuilder(test_file)
-    matches = schedule_builder._find_matches()
+    schedule_builder._find_matches()
 
     assert "No unused matches found" in caplog.text
 
@@ -441,13 +495,34 @@ def test_validate_class_size_pass(tmp_path):
     test_file = str(tmp_path.joinpath("test.xlsx"))
 
     data = {
-        "block": [1, 1,],
-        "class": ["test class 1", "test class 1",],
-        "total_students": [2, 2,],
-        "max_students": [2, 2,],
-        "num_classes": [1, 1,],
-        "day_number": [1, 1,],
-        "student": ["test 1", "test 2",],
+        "block": [
+            1,
+            1,
+        ],
+        "class": [
+            "test class 1",
+            "test class 1",
+        ],
+        "total_students": [
+            2,
+            2,
+        ],
+        "max_students": [
+            2,
+            2,
+        ],
+        "num_classes": [
+            1,
+            1,
+        ],
+        "day_number": [
+            1,
+            1,
+        ],
+        "student": [
+            "test 1",
+            "test 2",
+        ],
     }
     df = pd.DataFrame(data)
     df.to_excel(test_file, index=False, engine="xlsxwriter")
@@ -462,13 +537,34 @@ def test_validate_class_size_fail(tmp_path):
     test_file = str(tmp_path.joinpath("test.xlsx"))
 
     data = {
-        "block": [1, 1,],
-        "class": ["test class 1", "test class 1",],
-        "total_students": [2, 2,],
-        "max_students": [1, 1,],
-        "num_classes": [1, 1,],
-        "day_number": [1, 1,],
-        "student": ["test 1", "test 2",],
+        "block": [
+            1,
+            1,
+        ],
+        "class": [
+            "test class 1",
+            "test class 1",
+        ],
+        "total_students": [
+            2,
+            2,
+        ],
+        "max_students": [
+            1,
+            1,
+        ],
+        "num_classes": [
+            1,
+            1,
+        ],
+        "day_number": [
+            1,
+            1,
+        ],
+        "student": [
+            "test 1",
+            "test 2",
+        ],
     }
     df = pd.DataFrame(data)
     df.to_excel(test_file, index=False, engine="xlsxwriter")
@@ -502,7 +598,13 @@ def test_validate_classes_pass(tmp_path):
 
     data_2 = data_1 = {
         "block": [1, 3, 2, 1, 2],
-        "class": ["test class 1", "test class 3", "test class 2", "test class 1", "test class 2",],
+        "class": [
+            "test class 1",
+            "test class 3",
+            "test class 2",
+            "test class 1",
+            "test class 2",
+        ],
         "student": ["test 1", "test 1", "test 1", "test 2", "test 2"],
     }
 
@@ -533,9 +635,13 @@ def test_validate_classes_fail(tmp_path):
 
     df_2 = pd.DataFrame(data_2)
 
-    expected_df = pd.DataFrame({"student": ["test 1"], "original": 3, "scheduled": 2,}).set_index(
-        "student"
-    )
+    expected_df = pd.DataFrame(
+        {
+            "student": ["test 1"],
+            "original": 3,
+            "scheduled": 2,
+        }
+    ).set_index("student")
 
     schedule_builder = ScheduleBuilder(test_file)
     invalid_df = schedule_builder._validate_classes(df_2)
@@ -547,13 +653,41 @@ def test_same_day_pass(tmp_path):
     test_file = str(tmp_path.joinpath("test.xlsx"))
 
     data = {
-        "block": [1, 1, 2,],
-        "class": ["test class 1", "test class 1", "test class 3",],
-        "total_students": [2, 2, 1,],
-        "max_students": [2, 2, 1,],
-        "num_classes": [1, 1, 1,],
-        "day_number": [1, 1, 1,],
-        "student": ["test 1", "test 2", "test 1",],
+        "block": [
+            1,
+            1,
+            2,
+        ],
+        "class": [
+            "test class 1",
+            "test class 1",
+            "test class 3",
+        ],
+        "total_students": [
+            2,
+            2,
+            1,
+        ],
+        "max_students": [
+            2,
+            2,
+            1,
+        ],
+        "num_classes": [
+            1,
+            1,
+            1,
+        ],
+        "day_number": [
+            1,
+            1,
+            1,
+        ],
+        "student": [
+            "test 1",
+            "test 2",
+            "test 1",
+        ],
     }
     df = pd.DataFrame(data)
     df.to_excel(test_file, index=False, engine="xlsxwriter")
@@ -568,13 +702,41 @@ def test_same_day_fail(tmp_path):
     test_file = str(tmp_path.joinpath("test.xlsx"))
 
     data = {
-        "block": [1, 1, 2,],
-        "class": ["test class 1", "test class 1", "test class 3",],
-        "total_students": [2, 2, 1,],
-        "max_students": [2, 2, 1,],
-        "num_classes": [1, 1, 1,],
-        "day_number": [1, 1, 2,],
-        "student": ["test 1", "test 2", "test 1",],
+        "block": [
+            1,
+            1,
+            2,
+        ],
+        "class": [
+            "test class 1",
+            "test class 1",
+            "test class 3",
+        ],
+        "total_students": [
+            2,
+            2,
+            1,
+        ],
+        "max_students": [
+            2,
+            2,
+            1,
+        ],
+        "num_classes": [
+            1,
+            1,
+            1,
+        ],
+        "day_number": [
+            1,
+            1,
+            2,
+        ],
+        "student": [
+            "test 1",
+            "test 2",
+            "test 1",
+        ],
     }
     df = pd.DataFrame(data)
     df.to_excel(test_file, index=False, engine="xlsxwriter")
@@ -600,7 +762,13 @@ def test_validate_students_pass(tmp_path):
 
     data_2 = data_1 = {
         "block": [1, 3, 2, 1, 4],
-        "class": ["test class 1", "test class 3", "test class 2", "test class 1", "test class 4",],
+        "class": [
+            "test class 1",
+            "test class 3",
+            "test class 2",
+            "test class 1",
+            "test class 4",
+        ],
         "student": ["test 1", "test 1", "test 1", "test 2", "test 1"],
     }
 
@@ -625,7 +793,11 @@ def test_validate_students_fail(tmp_path):
 
     data_2 = {
         "block": [1, 3, 2],
-        "class": ["test class 1", "test class 3", "test class 2",],
+        "class": [
+            "test class 1",
+            "test class 3",
+            "test class 2",
+        ],
         "student": ["test 1", "test 1", "test 1"],
     }
 

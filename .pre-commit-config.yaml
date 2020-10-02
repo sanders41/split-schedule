@@ -1,17 +1,29 @@
 repos:
--   repo: https://github.com/python/black
-    rev: 19.10b0
-    hooks:
-    -   id: black
+    - repo: https://github.com/pre-commit/pre-commit-hooks
+      rev: v2.3.0
+      hooks:
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+    - repo: https://github.com/python/black
+      rev: 20.8b1
+      hooks:
+      - id: black
         language_version: python3.8
--   repo: https://github.com/pre-commit/mirrors-isort
-    rev: v5.1.1
-    hooks:
-    -   id: isort
+    - repo: https://github.com/pre-commit/mirrors-isort
+      rev: v5.5.4
+      hooks:
+      - id: isort
         additional_dependencies: [toml]
-  
--   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v0.780
-    hooks:
-    -  id: mypy
-       files: split_schedule/
+    - repo: https://github.com/pre-commit/mirrors-mypy
+      rev: v0.782
+      hooks:
+      - id: mypy
+        files: sas7bdat_converter/
+    - repo: https://gitlab.com/pycqa/flake8
+      rev: 3.8.3
+      hooks:
+        - id: flake8
+          language_version: python3
+          additional_dependencies: [flake8-print]
+          args: [--max-line-length=100, --ignore=E231, --ignore=W503]

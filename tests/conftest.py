@@ -1,6 +1,4 @@
-from itertools import combinations, groupby
-from operator import itemgetter
-from typing import List
+from itertools import combinations
 
 import pandas as pd
 import pytest
@@ -9,7 +7,17 @@ import pytest
 @pytest.fixture(scope="session")
 def class_size_check(test_schedule):
     df = pd.read_excel(str(test_schedule), engine="openpyxl")
-    class_size = df.groupby(["block", "class",]).size().to_frame().reset_index()
+    class_size = (
+        df.groupby(
+            [
+                "block",
+                "class",
+            ]
+        )
+        .size()
+        .to_frame()
+        .reset_index()
+    )
     class_size = [
         {"block": x[0], "class_name": x[1], "total_students": x[2]} for x in class_size.to_numpy()
     ]
@@ -60,7 +68,16 @@ def student_matches_check(test_schedule):
 def student_classes_check(test_schedule):
     df = pd.read_excel(str(test_schedule), engine="openpyxl")
     student_classes = {}
-    for student in df[["student", "block", "class"]].sort_values(by=["block", "class",]).to_numpy():
+    for student in (
+        df[["student", "block", "class"]]
+        .sort_values(
+            by=[
+                "block",
+                "class",
+            ]
+        )
+        .to_numpy()
+    ):
         if student[0] in student_classes:
             student_classes[student[0]]["blocks"][student[1]] = student[2]
         else:

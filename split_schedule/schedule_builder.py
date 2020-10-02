@@ -52,7 +52,11 @@ class ScheduleBuilder:
         logger.info(f"Schedule build try number {self._attempt}")
 
         logging.info("Filling blocks")
-        fill_classes = self._fill_classes(classes, total_classes, student_classes_grouped,)
+        fill_classes = self._fill_classes(
+            classes,
+            total_classes,
+            student_classes_grouped,
+        )
         logging.info("Filling blocks complete")
 
         if fill_classes:
@@ -77,7 +81,7 @@ class ScheduleBuilder:
 
             if validated_students:
                 logger.error(
-                    "Student original number of classes and generated number of classes do not match"
+                    "Student original number of classes and generated number of classes do not match"  # noqa: E501
                 )
 
             if (
@@ -179,7 +183,9 @@ class ScheduleBuilder:
                                             and c["class_name"] == a["class_name"]
                                             and len(c["classes"][day_tried]) < c["max_students"]
                                         ):
-                                            c["classes"][a["class_day"]].add(a["student"])  # type: ignore
+                                            c["classes"][a["class_day"]].add(  # type: ignore
+                                                a["student"]
+                                            )
                                 students_added.add(person)
                             else:
                                 return None
@@ -291,7 +297,17 @@ class ScheduleBuilder:
         return matches
 
     def _get_class_size(self) -> List[ScheduleTotalStudents]:
-        class_size = self.schedule_df.groupby(["block", "class",]).size().to_frame().reset_index()
+        class_size = (
+            self.schedule_df.groupby(
+                [
+                    "block",
+                    "class",
+                ]
+            )
+            .size()
+            .to_frame()
+            .reset_index()
+        )
         return [
             {"block": x[0], "class_name": x[1], "total_students": x[2]}
             for x in class_size.to_numpy()
@@ -301,7 +317,12 @@ class ScheduleBuilder:
         student_classes: Dict[str, Dict[str, Dict[int, str]]] = {}
         for student in (
             self.schedule_df[["student", "block", "class"]]
-            .sort_values(by=["block", "class",])
+            .sort_values(
+                by=[
+                    "block",
+                    "class",
+                ]
+            )
             .to_numpy()
         ):
             if student[0] in student_classes:
