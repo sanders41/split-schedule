@@ -183,9 +183,9 @@ class ScheduleBuilder:
                                             and c["class_name"] == a["class_name"]
                                             and len(c["classes"][day_tried]) < c["max_students"]
                                         ):
-                                            c["classes"][a["class_day"]].add(
+                                            c["classes"][a["class_day"]].add(  # type: ignore
                                                 a["student"]
-                                            )  # type: ignore
+                                            )
                                 students_added.add(person)
                             else:
                                 return None
