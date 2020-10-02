@@ -14,6 +14,10 @@ setup(
     long_description=README,
     long_description_content_type="text/markdown",
     packages=["split_schedule"],
-    install_requires=["pandas>=1.0.4", "openpyxl>=3.0.4", "XlsxWriter==1.2.9",],
+    install_requires=[
+        "pandas>=1.0.4",
+        "openpyxl>=3.0.4",
+        "XlsxWriter==1.2.9",
+    ],
     classifiers=["Programming Language :: Python :: 3.8", "Operating System :: OS Independent"],
 )
