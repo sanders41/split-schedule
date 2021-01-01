@@ -3,6 +3,7 @@
 *.DS_Store
 
 # Editor
+.idea
 .vscode
 
 # Byte-compiled / optimized / DLL files
@@ -40,6 +41,9 @@ coverage.xml
 venv/
 env/
 ENV/
+
+# pyenv
+.python-version
 
 # mypy
 .mypy_cache
