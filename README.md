@@ -1,6 +1,7 @@
 # Split Schedule
 
-[![Travis Build Status](https://travis-ci.org/sanders41/split_schedule.svg?branch=master)](https://travis-ci.org/sanders41/split_schedule)
+[![Tests Status](https://github.com/sanders41/split_schedule/workflows/Tests/badge.svg?branch=master&event=push)](https://github.com/sanders41/split_schedule/actions?query=workflow%3ATests+branch%3Amaster+event%3Apush)
+[![Lint Status](https://github.com/sanders41/split_schedule/workflows/Linting/badge.svg?branch=master&event=push)](https://github.com/sanders41/split_schedule/actions?query=workflow%3ALinting+branch%3Amaster+event%3Apush)
 [![Coverage](https://codecov.io/github/sanders41/split_schedule/coverage.svg?branch=master)](https://codecov.io/gh/sanders41/split_schedule)
 
 This progam takes a schools class list and reduces the number of students in each class by a specified amount. This is done by splitting the classes across day. Each individual student's day is kept the same for each of his/her classes.
