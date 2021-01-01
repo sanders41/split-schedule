@@ -28,14 +28,18 @@ Start by cloning this repository.
 
 ```
 git clone https://github.com/sanders41/split_schedule.git
+
+If you do not already have Poetry installed
+you will need to install it with the instuctions here https://python-poetry.org/docs/#installation
 ```
 
 **Note:** Python 3.8 or greater is required
 
-Using a virtual environmnet is recommended for installing this package. Once the virtual environment is created activate it and run the setup script.
+Using a virtual environmnet is recommended for installing this package.
+Once the virtual environment is created activate it and install the dependencies.
 
 ```
-pip install .
+poetry install
 ```
 
 # Usage
