@@ -19,17 +19,20 @@ jobs:
     - name: "Python setup"
       run: |
         python3 -m pip install --upgrade pip
-        python3 -m pip install -r requirements-dev.txt
-        python3 -m pip install .
+        python3 -m pip install poetry
+        poetry install
     - name: Isort check
       run: |
-        isort split_schedule tests --check-only
+        poetry run isort split_schedule tests --check-only
     - name: Black check
       run: |
-        black split_schedule tests --check
+        poetry run black split_schedule tests --check
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
-        flake8 split_schedule tests --count --select=E9,F63,F7,F82 --show-source --statistics
+        poetry run flake8 split_schedule tests --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 aplit_schedule tests --count --exit-zero --max-complexity=10 --max-line-length=100 --statistics
+        poetry run flake8 aplit_schedule tests --count --exit-zero --max-complexity=10 --max-line-length=100 --statistics
+    - name: mypy check
+      run: |
+        poetry run mypy split_schedule
