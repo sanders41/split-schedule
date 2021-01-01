@@ -27,7 +27,7 @@ jobs:
         python3 -m pip install .
     - name: Test with pytest
       run: |
-        pytest --cov-split_scheudle --cov-report=xml
+        pytest --cov=split_scheudle --cov-report=xml
     - name: Upload coverage
       uses: codecov/codecov-action@v1
       with:
