@@ -22,29 +22,29 @@ The generated schedule will be an Excel file with the fillowing columns:
 * day_number = The day for the class. This can be used as desired. For example 1 = Monday, 2 = Tuesday, etc.
 * student = The name of the student
 
-# Instillation
+## Instillation
 
 Start by cloning this repository.
 
-```
+```zsh
 git clone https://github.com/sanders41/split_schedule.git
+```
 
 If you do not already have Poetry installed
-you will need to install it with the instuctions here https://python-poetry.org/docs/#installation
-```
+you will need to install it with the instuctions [here](https://python-poetry.org/docs/#installation).
 
 **Note:** Python 3.8 or greater is required
 
 Using a virtual environmnet is recommended for installing this package.
 Once the virtual environment is created activate it and install the dependencies.
 
-```
+```zsh
 poetry install
 ```
 
-# Usage
+## Usage
 
-## Arguments
+### Arguments
 
 * -h, --help: show this help message and exit
 * -f, --file_path: Required
@@ -56,19 +56,19 @@ poetry install
 * -s, --smallest_allowed: Optional - Default = 1
   * The smallest number of students a class should be reduced. If this number is greater than the calculated reduce by value then reduce by will be overriden, and this will be used to reduce class sized. For example, if the maximum number of students after reduction is calculated to 5, but smallest allowe is set to 7 then 7 will be used instead of 5. It is possible to have 1 class that is smaller than the smallest allowed if the final day does not have enough students for the smallest allowed.
 
-## Running the program
+### Running the program
 
-### Example using the default minimum class size of 1 and reducing the classes by 20%
+Example using the default minimum class size of 1 and reducing the classes by 20%
 
-```
+```zsh
 python set_schedule.py -f /path/to/original_file.xlsx -o /path/to/generated_schedule.xlsx -r 0.2
 ```
 
 **Note:** Example uses Mac/Linux type file paths. For Windows use paths like `c:\path\to\original_file.xlsx` and `c:\path\to\generated_schedule.xlsx`.
 
-### Example reducing the class size by 30% or a minimum of 8 students, which ever is greater
+Example reducing the class size by 30% or a minimum of 8 students, which ever is greater
 
-```
+```zsh
 python set_schedule.py -f /path/to/original_file.xlsx -o /path/to/generated_schedule.xlsx -r 0.3 -s 8
 ```
 
