@@ -51,63 +51,29 @@ class ScheduleBuilder:
 
         logger.info(f"Schedule build try number {self._attempt}")
 
-        logging.info("Filling blocks")
+        logger.info("Filling blocks")
         fill_classes = self._fill_classes(
             classes,
             total_classes,
             student_classes_grouped,
         )
-        logging.info("Filling blocks complete")
+        logger.info("Filling blocks complete")
 
         if fill_classes:
             logger.info("Formatting classes")
             fill_class_df = self._expand_fill_classes(fill_classes)
             logger.info("Formatting classes complete")
 
-            logger.info("Validating generated schedule")
-            validated_class_size = self._validate_class_size(fill_class_df)
-            validated_classes_numbers = self._validate_classes(fill_class_df)
-            validated_same_days = self._validate_same_day(fill_class_df)
-            validated_students = self._validate_students(fill_class_df)
-
-            if validated_class_size is not None:
-                logger.error("Classes contain too many students")
-
-            if validated_classes_numbers is not None:
-                logger.error("Student missing from the generated schedule")
-
-            if validated_same_days is not None:
-                logger.error("Student not on the same day")
-
-            if validated_students:
-                logger.error(
-                    "Student original number of classes and generated number of classes do not match"  # noqa: E501
-                )
-
-            if (
-                validated_class_size is not None
-                or validated_classes_numbers is not None
-                or validated_same_days is not None
-                or validated_students
-            ):
-                if self._attempt < max_tries:
-                    self._attempt += 1
-                    self.build_schedule(reduce_by, save_path, smallest_allowed, max_tries)
-                else:
-                    raise SchedulingError("No possible schedule found")
-
-            logger.info("Validation complete")
-
-            logger.info(f"Saving schedule to {save_path}")
-            self._save_schedule_to_file(fill_class_df, save_path)
-            logger.info("Saving schedule complete")
+            self._validate_generated_schedule(
+                fill_class_df, reduce_by, save_path, smallest_allowed, max_tries
+            )
         else:
-            if self._attempt < max_tries:
-                logger.info("No schedule found. Retrying")
-                self._attempt += 1
-                self.build_schedule(reduce_by, save_path, smallest_allowed, max_tries)
-            else:
+            if self._attempt >= max_tries:
                 raise SchedulingError("No possible schedule found")
+
+            logger.info("No schedule found. Retrying")
+            self._attempt += 1
+            self.build_schedule(reduce_by, save_path, smallest_allowed, max_tries)
 
     def _expand_fill_classes(self, fill_classes: List[ScheduleDays]) -> pd.DataFrame:
         fill_classes_expanded = []
@@ -175,23 +141,22 @@ class ScheduleBuilder:
                                         day_tried = i
                                         break
 
-                            if len(to_add) == len(student_classes_grouped[person]["blocks"]):
-                                for a in to_add:
-                                    for c in fill_classes:
-                                        if (
-                                            c["block"] == a["block"]
-                                            and c["class_name"] == a["class_name"]
-                                            and len(c["classes"][day_tried]) < c["max_students"]
-                                        ):
-                                            c["classes"][a["class_day"]].add(  # type: ignore
-                                                a["student"]
-                                            )
-                                students_added.add(person)
-                            else:
+                            if len(to_add) != len(student_classes_grouped[person]["blocks"]):
                                 return None
 
+                            for a in to_add:
+                                for c in fill_classes:
+                                    if (
+                                        c["block"] == a["block"]
+                                        and c["class_name"] == a["class_name"]
+                                        and len(c["classes"][day_tried]) < c["max_students"]
+                                    ):
+                                        c["classes"][a["class_day"]].add(  # type: ignore
+                                            a["student"]
+                                        )
+                            students_added.add(person)
         day = randrange(total_days)
-        for student_name in student_classes_grouped:
+        for student_name, value in student_classes_grouped.items():
             if student_name not in students_added:
                 day_tried = day
                 days = []
@@ -211,7 +176,7 @@ class ScheduleBuilder:
                             }
                             if add not in to_add:
                                 to_add.append(add)
-                    if len(to_add) == len(student_classes_grouped[student_name]["blocks"]):
+                    if len(to_add) == len(value["blocks"]):
                         break
 
                     to_add = []
@@ -220,19 +185,18 @@ class ScheduleBuilder:
                         if i not in days:
                             day_tried = i
                             break
-                if len(to_add) == len(student_classes_grouped[student_name]["blocks"]):
-                    for a in to_add:
-                        for c in fill_classes:
-                            if (
-                                c["block"] == a["block"]
-                                and c["class_name"] == a["class_name"]
-                                and len(c["classes"][day_tried]) < c["max_students"]
-                            ):
-                                c["classes"][a["class_day"]].add(a["student"])  # type: ignore
-                    students_added.add(student_name)
-                else:
+                if len(to_add) != len(student_classes_grouped[student_name]["blocks"]):
                     return None
 
+                for a in to_add:
+                    for c in fill_classes:
+                        if (
+                            c["block"] == a["block"]
+                            and c["class_name"] == a["class_name"]
+                            and len(c["classes"][day_tried]) < c["max_students"]
+                        ):
+                            c["classes"][a["class_day"]].add(a["student"])  # type: ignore
+                students_added.add(student_name)
         return fill_classes
 
     def _find_matches(self) -> List[Dict[int, List[List[str]]]]:
@@ -413,6 +377,51 @@ class ScheduleBuilder:
             return None
 
         return df_merge
+
+    def _validate_generated_schedule(
+        self,
+        fill_class_df: pd.DataFrame,
+        reduce_by: float,
+        save_path: str,
+        smallest_allowed: int = 1,
+        max_tries: int = 10,
+    ) -> None:
+        logger.info("Validating generated schedule")
+        validated_class_size = self._validate_class_size(fill_class_df)
+        validated_classes_numbers = self._validate_classes(fill_class_df)
+        validated_same_days = self._validate_same_day(fill_class_df)
+        validated_students = self._validate_students(fill_class_df)
+
+        if validated_class_size is not None:
+            logger.error("Classes contain too many students")
+
+        if validated_classes_numbers is not None:
+            logger.error("Student missing from the generated schedule")
+
+        if validated_same_days is not None:
+            logger.error("Student not on the same day")
+
+        if validated_students:
+            logger.error(
+                "Student original number of classes and generated number of classes do not match"  # noqa: E501
+            )
+
+        if (
+            validated_class_size is not None
+            or validated_classes_numbers is not None
+            or validated_same_days is not None
+            or validated_students
+        ):
+            if self._attempt >= max_tries:
+                raise SchedulingError("No possible schedule found")
+
+            self._attempt += 1
+            self.build_schedule(reduce_by, save_path, smallest_allowed, max_tries)
+        logger.info("Validation complete")
+
+        logger.info(f"Saving schedule to {save_path}")
+        self._save_schedule_to_file(fill_class_df, save_path)
+        logger.info("Saving schedule complete")
 
     def _validate_same_day(self, reduced_df: pd.DataFrame) -> Optional[pd.DataFrame]:
         reduced_df = reduced_df[["student", "day_number"]].drop_duplicates()
