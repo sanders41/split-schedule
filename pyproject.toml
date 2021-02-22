@@ -1,9 +1,10 @@
 [tool.poetry]
-name = "split_schedule"
-version = "0.2.0"
+name = "split-schedule"
+version = "0.3.0"
 description = "Split schedule into smaller class sizes"
 authors = ["Paul Sanders <psanders1@gmail.com>"]
 license = "MIT"
+keywords = ["schools", "schedule"]
 
 [tool.poetry.dependencies]
 python = "^3.8"
