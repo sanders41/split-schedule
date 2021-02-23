@@ -26,4 +26,4 @@ repos:
         - id: flake8
           language_version: python3
           additional_dependencies: [flake8-print]
-          args: [--max-line-length=100, --ignore=E231, --ignore=W503]
+          args: ["--max-line-length=100", "--ignore=E231,E501,W503"]

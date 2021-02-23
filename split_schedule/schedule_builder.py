@@ -1,81 +1,157 @@
+from __future__ import annotations
+
 import logging
 from itertools import combinations
 from math import ceil, floor
+from pathlib import Path
 from random import randrange
-from typing import Dict, List, Optional, Set
+from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
 
+from split_schedule.errors import NoScheduleError, SchedulingError
 from split_schedule.schedule_types import ReducedClass, ScheduleDays, ScheduleTotalStudents
-
-logging.basicConfig(format="%(asctime)s: %(levelname)s: %(message)s")
-logging.root.setLevel(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-
-class SchedulingError(Exception):
-    pass
 
 
 class ScheduleBuilder:
-    def __init__(self, schedule_file_path: str) -> None:
-        self.schedule_df = self._load_data(schedule_file_path)
-        self._attempted_df: List[pd.DataFrame] = []
+    def __init__(self) -> None:
+        self.final_schedule_df: Optional[pd.DataFrame] = None
+
+        self._schedule_df: pd.DataFrame = pd.DataFrame(columns=["block", "class", "student"])
+        self._attempted_df: list[pd.DataFrame] = []
         self._attempt: int = 1
+        self._verbose: bool = False
 
-    def build_schedule(
-        self, reduce_by: float, save_path: str, smallest_allowed: int = 1, max_tries: int = 10
+        logging.basicConfig(format="%(asctime)s: %(levelname)s: %(message)s")
+        logging.root.setLevel(level=logging.INFO)
+        self._logger = logging.getLogger()
+
+    def build_schedule_from_df(
+        self,
+        df: pd.DataFrame,
+        reduce_by: float = 0.2,
+        smallest_allowed: int = 1,
+        max_tries: int = 10,
+        verbose: bool = False,
     ) -> None:
-        logger.info("Getting student classes")
-        student_classes_grouped = self._get_student_classes()
-        logger.info("Getting student classes complete")
+        self._schedule_df = df
+        self._verbose = verbose
+        self._build_schedule(reduce_by, smallest_allowed, max_tries)
 
-        logger.info("Initalizing classes")
-        classes = self._init_classes(reduce_by, smallest_allowed)
-        logger.info("Initalizing classes complete")
-
-        logger.info("Getting class sizes")
-        class_size = self._get_class_size()
-        logger.info("Getting class sizes complete")
-
-        logger.info("Reducing class sizes")
-        reduced_classes = self._reduce_class(
-            class_size=class_size, reduce_by=reduce_by, smallest_allowed=smallest_allowed
+    def build_schedule_from_file(
+        self,
+        schedule_file_path: Union[Path, str],
+        reduce_by: float = 0.2,
+        smallest_allowed: int = 1,
+        max_tries: int = 10,
+        verbose: bool = False,
+    ) -> None:
+        file_path = (
+            Path(schedule_file_path) if isinstance(schedule_file_path, str) else schedule_file_path
         )
-        logger.info("Reducing class sizes complete")
 
-        logger.info("Getting total classes needed")
-        total_classes = self._get_total_classes(reduced_classes)
-        logger.info("Getting total classes needed complete")
+        if file_path.suffix == ".xlsx":
+            self._schedule_df = pd.read_excel(file_path)
+        elif file_path.suffix == ".csv":
+            self._schedule_df = pd.read_csv(file_path)
+        else:
+            raise ValueError("File should either be an xlsx Excel or a csv file")
 
-        logger.info(f"Schedule build try number {self._attempt}")
+        self._verbose = verbose
+        self._build_schedule(reduce_by, smallest_allowed, max_tries)
 
-        logger.info("Filling blocks")
+    def save_schedule(self, save_path: Union[Path, str]) -> None:
+        if self.final_schedule_df is None:
+            raise NoScheduleError("No schedule has been generated")
+
+        file_path = Path(save_path) if isinstance(save_path, str) else save_path
+
+        if self._verbose:
+            self._logger.info(f"Saving schedule to {save_path}")
+
+        if file_path.suffix == ".xlsx":
+            self.final_schedule_df.to_excel(file_path, index=False, engine="openpyxl")
+        elif file_path.suffix == ".csv":
+            self.final_schedule_df.to_csv(file_path, index=False)
+        else:
+            raise ValueError("The output file should either be an xlsx Excel or a csv file")
+
+        if self._verbose:
+            self._logger.info("Saving schedule complete")
+
+    def _build_schedule(
+        self, reduce_by: float, smallest_allowed: int = 1, max_tries: int = 10
+    ) -> None:
+        if self._verbose:
+            self._logger.info("Getting student classes")
+
+        student_classes_grouped = self._get_student_classes()
+
+        if self._verbose:
+            self._logger.info("Getting student classes complete")
+
+        if self._verbose:
+            self._logger.info("Initalizing classes")
+
+        classes = self._init_classes(reduce_by, smallest_allowed)
+
+        if self._verbose:
+            self._logger.info("Initalizing classes complete")
+
+        if self._verbose:
+            self._logger.info("Getting class sizes")
+
+        if self._verbose:
+            self._logger.info("Getting class sizes complete")
+
+        if self._verbose:
+            self._logger.info("Reducing class sizes")
+
+        if self._verbose:
+            self._logger.info("Reducing class sizes complete")
+
+        if self._verbose:
+            self._logger.info("Getting total classes needed")
+
+        if self._verbose:
+            self._logger.info("Getting total classes needed complete")
+
+        if self._verbose:
+            self._logger.info(f"Schedule build try number {self._attempt}")
+
+        if self._verbose:
+            self._logger.info("Filling blocks")
+
         fill_classes = self._fill_classes(
             classes,
-            total_classes,
             student_classes_grouped,
         )
-        logger.info("Filling blocks complete")
+
+        if self._verbose:
+            self._logger.info("Filling blocks complete")
 
         if fill_classes:
-            logger.info("Formatting classes")
-            fill_class_df = self._expand_fill_classes(fill_classes)
-            logger.info("Formatting classes complete")
+            if self._verbose:
+                self._logger.info("Formatting classes")
 
-            self._validate_generated_schedule(
-                fill_class_df, reduce_by, save_path, smallest_allowed, max_tries
-            )
+            fill_class_df = self._expand_fill_classes(fill_classes)
+
+            if self._verbose:
+                self._logger.info("Formatting classes complete")
+
+            self._validate_generated_schedule(fill_class_df, reduce_by, smallest_allowed, max_tries)
         else:
             if self._attempt >= max_tries:
                 raise SchedulingError("No possible schedule found")
 
-            logger.info("No schedule found. Retrying")
-            self._attempt += 1
-            self.build_schedule(reduce_by, save_path, smallest_allowed, max_tries)
+            if self._verbose:
+                self._logger.info("No schedule found. Retrying")
 
-    def _expand_fill_classes(self, fill_classes: List[ScheduleDays]) -> pd.DataFrame:
+            self._attempt += 1
+            self._build_schedule(reduce_by, smallest_allowed, max_tries)
+
+    def _expand_fill_classes(self, fill_classes: list[ScheduleDays]) -> pd.DataFrame:
         fill_classes_expanded = []
         for fill in fill_classes:
             for i, c in enumerate(fill["classes"]):
@@ -98,10 +174,9 @@ class ScheduleBuilder:
 
     def _fill_classes(
         self,
-        fill_classes: List[ScheduleDays],
-        total_classes: int,
-        student_classes_grouped: Dict[str, Dict[str, Dict[int, str]]],
-    ) -> Optional[List[ScheduleDays]]:
+        fill_classes: list[ScheduleDays],
+        student_classes_grouped: dict[str, dict[str, dict[int, str]]],
+    ) -> Optional[list[ScheduleDays]]:
         matches = self._find_matches()
         students_added = set()
 
@@ -114,7 +189,7 @@ class ScheduleBuilder:
                     for person in people:
                         if person not in students_added:
                             day_tried = day
-                            days: List[int] = []
+                            days: list[int] = []
                             to_add = []
                             while len(days) < total_days:
                                 for c in fill_classes:
@@ -199,17 +274,19 @@ class ScheduleBuilder:
                 students_added.add(student_name)
         return fill_classes
 
-    def _find_matches(self) -> List[Dict[int, List[List[str]]]]:
-        blocks = self.schedule_df["block"].sort_values().unique()
-        total_blocks = self.schedule_df["block"].max()
-        match_df = self.schedule_df.pivot(
+    def _find_matches(self) -> list[dict[int, list[list[str]]]]:
+        blocks = self._schedule_df["block"].sort_values().unique()
+        total_blocks = self._schedule_df["block"].max()
+        match_df = self._schedule_df.pivot(
             index="student", columns="block", values="class"
         ).reset_index()
 
         if len(self._attempted_df) == 0:
             self._attempted_df.append(match_df)
         else:
-            logger.info("Finding unused student order")
+            if self._verbose:
+                self._logger.info("Finding unused student order")
+
             total_attempted_pre = len(self._attempted_df)
             total_attempted = len(self._attempted_df)
             attempt_number = 1
@@ -217,16 +294,18 @@ class ScheduleBuilder:
                 self._attempted_df.append(match_df)
                 match_df = match_df.sample(frac=1)
                 if attempt_number == total_attempted:
-                    logger.info("No unused matches found")
+                    if self._verbose:
+                        self._logger.info("No unused matches found")
                     break
                 attempt_number += 1
 
-            if len(self._attempted_df) <= total_attempted_pre:
-                logger.info("No unused matches found")
-            else:
-                logger.info("Unused student order found")
+            if self._verbose:
+                if len(self._attempted_df) <= total_attempted_pre:
+                    self._logger.info("No unused matches found")
+                else:
+                    self._logger.info("Unused student order found")
 
-        matches: List[Dict[int, List[List[str]]]] = []
+        matches: list[dict[int, list[list[str]]]] = []
         for i in range(total_blocks, 1, -1):
             matches.append({i: []})
 
@@ -260,9 +339,9 @@ class ScheduleBuilder:
 
         return matches
 
-    def _get_class_size(self) -> List[ScheduleTotalStudents]:
+    def _get_class_size(self) -> list[ScheduleTotalStudents]:
         class_size = (
-            self.schedule_df.groupby(
+            self._schedule_df.groupby(
                 [
                     "block",
                     "class",
@@ -277,10 +356,10 @@ class ScheduleBuilder:
             for x in class_size.to_numpy()
         ]
 
-    def _get_student_classes(self) -> Dict[str, Dict[str, Dict[int, str]]]:
-        student_classes: Dict[str, Dict[str, Dict[int, str]]] = {}
+    def _get_student_classes(self) -> dict[str, dict[str, dict[int, str]]]:
+        student_classes: dict[str, dict[str, dict[int, str]]] = {}
         for student in (
-            self.schedule_df[["student", "block", "class"]]
+            self._schedule_df[["student", "block", "class"]]
             .sort_values(
                 by=[
                     "block",
@@ -296,7 +375,7 @@ class ScheduleBuilder:
 
         return student_classes
 
-    def _get_total_classes(self, reduced_classes: List[ReducedClass]) -> int:
+    def _get_total_classes(self, reduced_classes: list[ReducedClass]) -> int:
         total_classes = 1
         for c in reduced_classes:
             if c["num_classes"] > total_classes:
@@ -304,17 +383,17 @@ class ScheduleBuilder:
 
         return total_classes
 
-    def _init_classes(self, reduce_by: float, smallest_allowed: int) -> List[ScheduleDays]:
+    def _init_classes(self, reduce_by: float, smallest_allowed: int) -> list[ScheduleDays]:
         class_sizes = self._get_class_size()
         reduced_classes = self._reduce_class(
             class_size=class_sizes, reduce_by=reduce_by, smallest_allowed=smallest_allowed
         )
         total_classes = self._get_total_classes(reduced_classes)
-        classes: List[ScheduleDays] = []
+        classes: list[ScheduleDays] = []
 
         for c in class_sizes:
             class_append: ScheduleDays = c  # type: ignore
-            class_list: List[Set] = []
+            class_list: list[set] = []
             for _ in range(total_classes):
                 class_list.append(set())
 
@@ -329,9 +408,9 @@ class ScheduleBuilder:
         return df
 
     def _reduce_class(
-        self, class_size: List[ScheduleTotalStudents], reduce_by: float, smallest_allowed: int
-    ) -> List[ReducedClass]:
-        reduced_class: List[ReducedClass] = class_size  # type: ignore
+        self, class_size: list[ScheduleTotalStudents], reduce_by: float, smallest_allowed: int
+    ) -> list[ReducedClass]:
+        reduced_class: list[ReducedClass] = class_size  # type: ignore
         for c in reduced_class:
             reduced = floor(c["total_students"] * reduce_by)
             size = max(reduced, smallest_allowed)
@@ -340,10 +419,6 @@ class ScheduleBuilder:
             c["num_classes"] = num_classes
 
         return reduced_class
-
-    def _save_schedule_to_file(self, df: pd.DataFrame, save_path: str) -> None:
-        df = df.sort_values(by=["day_number", "block", "class"])
-        df.to_excel(save_path, index=False, engine="xlsxwriter")
 
     def _validate_class_size(self, reduced_df: pd.DataFrame) -> Optional[pd.DataFrame]:
         df = (
@@ -367,7 +442,7 @@ class ScheduleBuilder:
         return reduced_df.drop(columns=["match"])
 
     def _validate_classes(self, reduced_df: pd.DataFrame) -> Optional[pd.DataFrame]:
-        df_main_grouped = self.schedule_df.groupby("student").size().to_frame("original")
+        df_main_grouped = self._schedule_df.groupby("student").size().to_frame("original")
         df_reduced_grouped = reduced_df.groupby("student").size().to_frame("scheduled")
         df_merge = df_main_grouped.merge(df_reduced_grouped, on="student")
 
@@ -382,29 +457,31 @@ class ScheduleBuilder:
         self,
         fill_class_df: pd.DataFrame,
         reduce_by: float,
-        save_path: str,
         smallest_allowed: int = 1,
         max_tries: int = 10,
     ) -> None:
-        logger.info("Validating generated schedule")
+        if self._verbose:
+            self._logger.info("Validating generated schedule")
+
         validated_class_size = self._validate_class_size(fill_class_df)
         validated_classes_numbers = self._validate_classes(fill_class_df)
         validated_same_days = self._validate_same_day(fill_class_df)
         validated_students = self._validate_students(fill_class_df)
 
-        if validated_class_size is not None:
-            logger.error("Classes contain too many students")
+        if self._verbose:
+            if validated_class_size is not None:
+                self._logger.error("Classes contain too many students")
 
-        if validated_classes_numbers is not None:
-            logger.error("Student missing from the generated schedule")
+            if validated_classes_numbers is not None:
+                self._logger.error("Student missing from the generated schedule")
 
-        if validated_same_days is not None:
-            logger.error("Student not on the same day")
+            if validated_same_days is not None:
+                self._logger.error("Student not on the same day")
 
-        if validated_students:
-            logger.error(
-                "Student original number of classes and generated number of classes do not match"  # noqa: E501
-            )
+            if validated_students:
+                self._logger.error(
+                    "Student original number of classes and generated number of classes do not match"
+                )
 
         if (
             validated_class_size is not None
@@ -416,12 +493,15 @@ class ScheduleBuilder:
                 raise SchedulingError("No possible schedule found")
 
             self._attempt += 1
-            self.build_schedule(reduce_by, save_path, smallest_allowed, max_tries)
-        logger.info("Validation complete")
+            self._build_schedule(reduce_by, smallest_allowed, max_tries)
 
-        logger.info(f"Saving schedule to {save_path}")
-        self._save_schedule_to_file(fill_class_df, save_path)
-        logger.info("Saving schedule complete")
+        if self._verbose:
+            self._logger.info("Validation complete")
+
+        self.final_schedule_df = fill_class_df.sort_values(by=["day_number", "block", "class"])
+
+        if self._verbose:
+            self._logger.info("Saving schedule complete")
 
     def _validate_same_day(self, reduced_df: pd.DataFrame) -> Optional[pd.DataFrame]:
         reduced_df = reduced_df[["student", "day_number"]].drop_duplicates()
@@ -433,10 +513,10 @@ class ScheduleBuilder:
 
         return reduced_df
 
-    def _validate_students(self, reduced_df: pd.DataFrame) -> Optional[List[str]]:
+    def _validate_students(self, reduced_df: pd.DataFrame) -> Optional[list[str]]:
         missing = [
             student
-            for student in self.schedule_df["student"].unique().tolist()
+            for student in self._schedule_df["student"].unique().tolist()
             if student not in reduced_df["student"].unique().tolist()
         ]
 
