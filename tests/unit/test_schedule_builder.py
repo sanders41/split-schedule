@@ -19,7 +19,7 @@ def test_build_schedule_validated_classs_size(monkeypatch, tmp_path, caplog, max
     }
 
     df_1 = pd.DataFrame(data_1)
-    df_1.to_excel(test_file, index=False, engine="xlsxwriter")
+    df_1.to_excel(test_file, index=False, engine="openpyxl")
 
     def mock_return(*args, **kwargs):
         return pd.DataFrame(
@@ -55,7 +55,7 @@ def test_build_schedule_validated_classes_number(monkeypatch, tmp_path, caplog, 
     }
 
     df_1 = pd.DataFrame(data_1)
-    df_1.to_excel(test_file, index=False, engine="xlsxwriter")
+    df_1.to_excel(test_file, index=False, engine="openpyxl")
 
     data_2 = {
         "block": [1, 2, 1, 2],
@@ -91,7 +91,7 @@ def test_build_schedule_validated_same_day(monkeypatch, tmp_path, caplog, max_tr
     }
 
     df_1 = pd.DataFrame(data_1)
-    df_1.to_excel(test_file, index=False, engine="xlsxwriter")
+    df_1.to_excel(test_file, index=False, engine="openpyxl")
 
     data_2 = {
         "block": [
@@ -159,7 +159,7 @@ def test_build_schedule_validated_students(monkeypatch, tmp_path, caplog, max_tr
     }
 
     df_1 = pd.DataFrame(data_1)
-    df_1.to_excel(test_file, index=False, engine="xlsxwriter")
+    df_1.to_excel(test_file, index=False, engine="openpyxl")
 
     def mock_return_validated_students(*args, **kwargs):
         return ["test 1"]
@@ -188,7 +188,7 @@ def test_build_schedule_restart(monkeypatch, tmp_path, caplog, verbose):
     }
 
     df_1 = pd.DataFrame(data_1)
-    df_1.to_excel(test_file, index=False, engine="xlsxwriter")
+    df_1.to_excel(test_file, index=False, engine="openpyxl")
 
     def mock_return(*args, **kwargs):
         return None
@@ -219,7 +219,7 @@ def test_fill_classes_match_no_space(tmp_path):
     }
 
     df = pd.DataFrame(data)
-    df.to_excel(test_file, index=False, engine="xlsxwriter")
+    df.to_excel(test_file, index=False, engine="openpyxl")
 
     fill_classes = [
         {
@@ -265,7 +265,7 @@ def test_fill_classes_no_match_no_space(tmp_path):
     }
 
     df = pd.DataFrame(data)
-    df.to_excel(test_file, index=False, engine="xlsxwriter")
+    df.to_excel(test_file, index=False, engine="openpyxl")
 
     fill_classes = [
         {
@@ -305,7 +305,7 @@ def test_fill_classes_match_move_day(tmp_path):
     }
 
     df = pd.DataFrame(data)
-    df.to_excel(test_file, index=False, engine="xlsxwriter")
+    df.to_excel(test_file, index=False, engine="openpyxl")
 
     fill_classes = [
         {
@@ -364,7 +364,7 @@ def test_find_matches_unused_order_found(tmp_path, caplog):
     }
 
     df = pd.DataFrame(data)
-    df.to_excel(test_file, index=False, engine="xlsxwriter")
+    df.to_excel(test_file, index=False, engine="openpyxl")
 
     class TestingScheduleBuilder(ScheduleBuilder):
         def __init__(self, schedule_file_path):
@@ -399,7 +399,7 @@ def test_find_matches_unused_order_not_found(tmp_path, caplog):
     }
 
     df_1 = pd.DataFrame(data_1)
-    df_1.to_excel(test_file, index=False, engine="xlsxwriter")
+    df_1.to_excel(test_file, index=False, engine="openpyxl")
 
     data_2 = {
         "block": [1, 1, 2, 2],
@@ -570,7 +570,7 @@ def test_validate_class_size_pass(tmp_path):
         ],
     }
     df = pd.DataFrame(data)
-    df.to_excel(test_file, index=False, engine="xlsxwriter")
+    df.to_excel(test_file, index=False, engine="openpyxl")
 
     schedule_builder = ScheduleBuilder()
     validate_df = schedule_builder._validate_class_size(df)
@@ -612,7 +612,7 @@ def test_validate_class_size_fail(tmp_path):
         ],
     }
     df = pd.DataFrame(data)
-    df.to_excel(test_file, index=False, engine="xlsxwriter")
+    df.to_excel(test_file, index=False, engine="openpyxl")
 
     schedule_builder = ScheduleBuilder()
     validate_df = schedule_builder._validate_class_size(df)
@@ -639,7 +639,7 @@ def test_validate_classes_pass(tmp_path):
     }
 
     df_1 = pd.DataFrame(data_1)
-    df_1.to_excel(test_file, index=False, engine="xlsxwriter")
+    df_1.to_excel(test_file, index=False, engine="openpyxl")
 
     data_2 = data_1 = {
         "block": [1, 3, 2, 1, 2],
@@ -670,7 +670,7 @@ def test_validate_classes_fail(tmp_path):
     }
 
     df_1 = pd.DataFrame(data_1)
-    df_1.to_excel(test_file, index=False, engine="xlsxwriter")
+    df_1.to_excel(test_file, index=False, engine="openpyxl")
 
     data_2 = {
         "block": [1, 2, 1, 2],
@@ -736,7 +736,7 @@ def test_same_day_pass(tmp_path):
         ],
     }
     df = pd.DataFrame(data)
-    df.to_excel(test_file, index=False, engine="xlsxwriter")
+    df.to_excel(test_file, index=False, engine="openpyxl")
 
     schedule_builder = ScheduleBuilder()
     validate = schedule_builder._validate_same_day(df)
@@ -785,7 +785,7 @@ def test_same_day_fail(tmp_path):
         ],
     }
     df = pd.DataFrame(data)
-    df.to_excel(test_file, index=False, engine="xlsxwriter")
+    df.to_excel(test_file, index=False, engine="openpyxl")
 
     schedule_builder = ScheduleBuilder()
     validate = schedule_builder._validate_same_day(df)
@@ -804,7 +804,7 @@ def test_validate_students_pass(tmp_path):
     }
 
     df_1 = pd.DataFrame(data_1)
-    df_1.to_excel(test_file, index=False, engine="xlsxwriter")
+    df_1.to_excel(test_file, index=False, engine="openpyxl")
 
     data_2 = data_1 = {
         "block": [1, 3, 2, 1, 4],
@@ -835,7 +835,7 @@ def test_validate_students_fail(tmp_path):
     }
 
     df_1 = pd.DataFrame(data_1)
-    df_1.to_excel(test_file, index=False, engine="xlsxwriter")
+    df_1.to_excel(test_file, index=False, engine="openpyxl")
 
     data_2 = {
         "block": [1, 3, 2],

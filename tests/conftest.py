@@ -236,7 +236,7 @@ def test_schedule_df():
 def test_schedule(tmp_path_factory):
     save_dir = tmp_path_factory.mktemp("schedule").joinpath("original_schedule.xlsx")
     df = pd.DataFrame(mock_data)
-    df.to_excel(save_dir, index=False, engine="xlsxwriter")
+    df.to_excel(save_dir, index=False, engine="openpyxl")
     return save_dir
 
 

@@ -71,7 +71,7 @@ class ScheduleBuilder:
             self._logger.info(f"Saving schedule to {save_path}")
 
         if file_path.suffix == ".xlsx":
-            self.final_schedule_df.to_excel(file_path, index=False, engine="xlsxwriter")
+            self.final_schedule_df.to_excel(file_path, index=False, engine="openpyxl")
         elif file_path.suffix == ".csv":
             self.final_schedule_df.to_csv(file_path, index=False)
         else:
