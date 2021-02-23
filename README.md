@@ -3,6 +3,7 @@
 [![Tests Status](https://github.com/sanders41/split_schedule/workflows/Testing/badge.svg?branch=main&event=push)](https://github.com/sanders41/split-schedule/actions?query=workflow%3ATesting+branch%3Amain+event%3Apush)
 [![Lint Status](https://github.com/sanders41/split_schedule/workflows/Linting/badge.svg?branch=main&event=push)](https://github.com/sanders41/split-schedule/actions?query=workflow%3ALinting+branch%3Amain+event%3Apush)
 [![Coverage](https://codecov.io/github/sanders41/split-schedule/coverage.svg?branch=main)](https://codecov.io/gh/sanders41/split-schedule)
+[![PyPI version](https://badge.fury.io/py/split-schedule.svg)](https://badge.fury.io/py/split-schedule)
 
 This package takes a class list and reduces the number of students in each class by a specified amount. This is done by splitting the classes across days. Each individual student's day is kept the same for each of his/her classes.
 
