@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "split-schedule"
-version = "0.3.1"
+version = "0.3.2"
 description = "Split schedule into smaller class sizes"
 authors = ["Paul Sanders <psanders1@gmail.com>"]
 license = "MIT"
